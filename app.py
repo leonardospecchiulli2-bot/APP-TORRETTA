@@ -23,16 +23,17 @@ st.markdown("""
         border-top: 5px solid #1B5E20; text-align: center;
         box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
-    .cassa-box {
-        background: #ffffff; padding: 20px; border-radius: 15px;
-        border: 1px solid #e0e0e0; margin-bottom: 20px;
+    .stButton>button {
+        width: 100%; border-radius: 10px; height: 3em; font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# INIZIALIZZAZIONE MEMORIA (DATABASE TEMPORANEO)
+# INIZIALIZZAZIONE MEMORIA
 if 'prodotti' not in st.session_state:
-    st.session_state.prodotti = ["Latte", "Caciocavallo", "Ricotta", "Formaggio Primo Sale"]
+    st.session_state.prodotti = {"Latte": 0, "Caciocavallo": 0, "Ricotta": 0}
+if 'latte_storico' not in st.session_state:
+    st.session_state.latte_storico = 1240
 if 'storico_vendite' not in st.session_state:
     st.session_state.storico_vendite = []
 if 'n_m' not in st.session_state: st.session_state.n_m = 1
@@ -41,34 +42,49 @@ if 'n_t' not in st.session_state: st.session_state.n_t = 1
 
 with st.sidebar:
     st.markdown("<h2 style='color: #1B5E20;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
-    scelta = st.radio("NAV", ["📊 Dashboard", "🐄 Registro Stalla", "🧀 Cassa e Vendite"], label_visibility="collapsed")
+    scelta = st.radio("NAV", ["📊 Dashboard", "🐄 Registro Stalla", "🛒 Cassa e Vendite"], label_visibility="collapsed")
 
 # --- PAGINA DASHBOARD ---
 if scelta == "📊 Dashboard":
-    st.title("📊 Analisi Aziendale")
-    # Calcolo totali reali dalle vendite
+    st.title("📊 Dashboard Operativa")
+    
+    # AZIONI RAPIDE
+    st.subheader("⚡ Azioni Rapide")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        with st.expander("🥛 REGISTRA PRODUZIONE LATTE"):
+            nuovo_latte = st.number_input("Litri munti oggi", min_value=0)
+            if st.button("Salva Latte"):
+                st.session_state.latte_storico = nuovo_latte
+                st.success("Produzione aggiornata!")
+    with col_b:
+        with st.expander("📦 CARICA PRODOTTI IN MAGAZZINO"):
+            p_scelto = st.selectbox("Prodotto da caricare", list(st.session_state.prodotti.keys()))
+            q_aggiunta = st.number_input("Quantità prodotta", min_value=0)
+            if st.button("Aggiorna Scorte"):
+                st.session_state.prodotti[p_scelto] += q_aggiunta
+                st.success(f"Magazzino aggiornato: {p_scelto} ora a {st.session_state.prodotti[p_scelto]}")
+
+    st.write("---")
+    
+    # METRICHE
     df_v = pd.DataFrame(st.session_state.storico_vendite)
     totale_incasso = df_v['Totale'].sum() if not df_v.empty else 0
     
     c1, c2, c3 = st.columns(3)
-    with c1: st.markdown(f'<div class="metric-card"><h4>🥛 LATTE OGGI</h4><h2>1.240 L</h2></div>', unsafe_allow_html=True)
-    with c2: st.markdown(f'<div class="metric-card"><h4>💰 INCASSO REALE</h4><h2>{totale_incasso:.2f} €</h2></div>', unsafe_allow_html=True)
-    with c3: st.markdown('<div class="metric-card"><h4>🌦️ METEO</h4><h2>Sereno</h2></div>', unsafe_allow_html=True)
-
-    if not df_v.empty:
-        st.write("---")
-        st.subheader("🎯 Qual è il prodotto che rende di più?")
-        # Raggruppa vendite per prodotto
-        guadagni = df_v.groupby('Prodotto')['Totale'].sum().sort_values(ascending=False)
-        st.bar_chart(guadagni, color="#1B5E20")
-    else:
-        st.info("Registra delle vendite in Cassa per vedere i grafici qui.")
+    with c1: st.markdown(f'<div class="metric-card"><h4>🥛 LATTE OGGI</h4><h2>{st.session_state.latte_storico} L</h2></div>', unsafe_allow_html=True)
+    with c2: st.markdown(f'<div class="metric-card"><h4>💰 INCASSO VENDITE</h4><h2>{totale_incasso:.2f} €</h2></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown('<div class="metric-card"><h4>📦 MAGAZZINO</h4>', unsafe_allow_html=True)
+        for p, q in st.session_state.prodotti.items():
+            st.write(f"**{p}:** {q}")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # --- PAGINA REGISTRO STALLA ---
 elif scelta == "🐄 Registro Stalla":
     st.title("🐄 Registro Stalla")
-    # ... (Codice della stalla della v4.1 rimane qui invariato)
     t1, t2, t3 = st.tabs(["🥛 Mungitura", "👶 Vitelli", "🐂 Maschi"])
+    # (Logica stalla v4.1...)
     with t1:
         for i in range(st.session_state.n_m):
             cd, cf = st.columns([2, 1])
@@ -80,51 +96,22 @@ elif scelta == "🐄 Registro Stalla":
             with cf:
                 f = st.file_uploader(f"Foto {i}", key=f"mf_{i}")
                 if f: st.image(f, width=100)
-        if st.button("➕ Aggiungi Capo (Mungitura)"):
+        if st.button("➕ Aggiungi Capo"):
             st.session_state.n_m += 1
             st.rerun()
-    # (Vitelli e Maschi seguono la stessa logica...)
 
 # --- PAGINA CASSA E VENDITE ---
-elif scelta == "🧀 Cassa e Vendite":
-    st.title("🧀 Cassa e Vendite")
-    
+elif scelta == "🛒 Cassa e Vendite":
+    st.title("🛒 Cassa e Vendite")
+    # ... (Codice cassa v5.0...)
     col1, col2 = st.columns([1, 2])
-
     with col1:
         st.subheader("🛒 Nuova Vendita")
         with st.form("form_vendita"):
-            prodotto = st.selectbox("Cosa stai vendendo?", st.session_state.prodotti)
-            prezzo_un = st.number_input("Prezzo al kg/litro (€)", min_value=0.0, value=1.0)
-            quantita = st.number_input("Quantità (kg o litri)", min_value=0.0, value=1.0)
-            
-            submit = st.form_submit_button("✅ Registra Vendita")
-            if submit:
-                tot = prezzo_un * quantita
-                st.session_state.storico_vendite.append({
-                    "Data": pd.Timestamp.now().strftime("%H:%M"),
-                    "Prodotto": prodotto,
-                    "Quantità": quantita,
-                    "Totale": tot
-                })
-                st.success(f"Venduto {prodotto} per {tot:.2f} €")
-        
-        st.write("---")
-        st.subheader("✨ Nuovo Prodotto?")
-        nuovo_p = st.text_input("Nome Prodotto (es. Scamorza)")
-        if st.button("➕ Aggiungi all'inventario"):
-            if nuovo_p and nuovo_p not in st.session_state.prodotti:
-                st.session_state.prodotti.append(nuovo_p)
-                st.success(f"{nuovo_p} aggiunto!")
-                st.rerun()
-
-    with col2:
-        st.subheader("📜 Storico Vendite Oggi")
-        if st.session_state.storico_vendite:
-            df_v = pd.DataFrame(st.session_state.storico_vendite)
-            st.table(df_v)
-            if st.button("🗑️ Cancella tutto lo storico"):
-                st.session_state.storico_vendite = []
-                st.rerun()
-        else:
-            st.info("Nessuna vendita registrata oggi.")
+            prod = st.selectbox("Prodotto", list(st.session_state.prodotti.keys()))
+            prezzo = st.number_input("Prezzo (€)", min_value=0.0, value=1.0)
+            quant = st.number_input("Quantità", min_value=0.0, value=1.0)
+            if st.form_submit_button("✅ Registra"):
+                st.session_state.storico_vendite.append({"Prodotto": prod, "Totale": prezzo*quant})
+                st.session_state.prodotti[prod] -= quant # Scarica dal magazzino
+                st.success("Vendita registrata!")
