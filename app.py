@@ -1,33 +1,50 @@
 
 import streamlit as st
 
-# 1. CONFIGURAZIONE PAGINA
+# 1. SETTINGS
 st.set_page_config(page_title="Torretta Pro", page_icon="🛡️", layout="wide")
 
-# 2. CSS PROFESSIONALE (Menu a bottoni verdi e Dashboard)
+# 2. CSS - MENU VERDE E DASHBOARD
 st.markdown("""
 <style>
-    /* Sfondo generale */
     .stApp { background-color: #FDFCF5; }
-    
-    /* NASCONDE I PALLINI E LO STANDARD DEL MENU */
     [data-testid="stSidebarNav"] {display: none;}
-    div.row-widget.stRadio > div[role="radiogroup"] > label [data-testid="stWidgetLabel"] { display: none; }
     
-    /* TRASFORMA IL MENU IN BOTTONI CLICCABILI */
+    /* MENU A BOTTONI */
     div.row-widget.stRadio > div[role="radiogroup"] > label {
         background-color: white;
-        padding: 15px 20px !important;
+        padding: 15px !important;
         border-radius: 12px !important;
-        border: 1px solid #E0E0E0 !important;
-        margin-bottom: 10px !important;
+        border: 1px solid #DDD !important;
+        margin-bottom: 10px;
         width: 100%;
-        cursor: pointer;
-        transition: all 0.3s ease;
+        transition: 0.3s;
     }
     
-    /* NASCONDE IL CERCHIETTO DEL RADIO */
+    /* NASCONDI PALLINO */
     div.row-widget.stRadio > div[role="radiogroup"] > label div:first-child { display: none !important; }
+    
+    /* TESTO MENU */
+    div.row-widget.stRadio > div[role="radiogroup"] > label p {
+        font-size: 18px !important; font-weight: 600 !important; text-align: center;
+    }
 
-    /* TESTO DEL MENU */
-    div.row-widget.stRadio > div[role="radiogroup"] > label div[data-testid="st
+    /* COLORE VERDE AL CLICK */
+    div.row-widget.stRadio > div[role="radiogroup"] > label:has(input:checked) {
+        background-color: #1B5E20 !important;
+        border: none !important;
+    }
+    div.row-widget.stRadio > div[role="radiogroup"] > label:has(input:checked) p {
+        color: white !important;
+    }
+
+    /* DASHBOARD CARDS */
+    .metric-card {
+        background-color: white; padding: 25px; border-radius: 15px;
+        border-top: 5px solid #1B5E20; text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    /* BOTTONI AZIONI */
+    .stButton>button {
+        height: 90px; font-size: 20px !important; border-radius:
