@@ -1,109 +1,104 @@
 import streamlit as st
 import pandas as pd
 
-# CONFIGURAZIONE BASE
-st.set_page_config(page_title="TORRETTA PRO", layout="wide")
+# 1. SETUP BASE
+st.set_page_config(page_title="Torretta Pro", layout="wide")
 
-# INIZIALIZZAZIONE DATI (Database interno)
-if 'prodotti' not in st.session_state:
-    st.session_state.prodotti = {"Latte": 0.0, "Caciocavallo": 0.0, "Ricotta": 0.0}
-if 'vendite' not in st.session_state: st.session_state.vendite = []
-if 'litri' not in st.session_state: st.session_state.litri = 1240
-if 'm' not in st.session_state: st.session_state.m = 1
+# 2. DATABASE FISSO (Non si cancella durante l'uso)
+if 'magazzino' not in st.session_state:
+    st.session_state.magazzino = {"Latte": 0.0, "Caciocavallo": 0.0, "Ricotta": 0.0}
+if 'lista_vendite' not in st.session_state:
+    st.session_state.lista_vendite = []
+if 'produzione_latte' not in st.session_state:
+    st.session_state.produzione_latte = 1240
+if 'numero_capi' not in st.session_state:
+    st.session_state.numero_capi = 1
 
-# CSS SEMPLICE E PULITO (Per leggere bene tutto)
-st.markdown("""
-<style>
-    .stApp { background-color: #F4F7F6; }
-    [data-testid="stSidebarNav"] {display: none;}
-    .css-17l6sh2 {border: 1px solid #ddd; padding: 20px; border-radius: 10px; background: white;}
-    .big-font { font-size:25px !important; font-weight: bold; color: #065F46; }
-</style>
-""", unsafe_allow_html=True)
-
-# MENU LATERALE
+# 3. MENU LATERALE
 with st.sidebar:
     st.title("🛡️ TORRETTA PRO")
-    scelta = st.radio("Scegli Pagina:", ["📊 DASHBOARD", "🐄 STALLA", "🛒 CASSA"])
+    menu = st.radio("VAI A:", ["DASHBOARD", "STALLA", "CASSA"])
 
-# --- DASHBOARD ---
-if scelta == "📊 DASHBOARD":
+# --- PAGINA DASHBOARD ---
+if menu == "DASHBOARD":
     st.header("📊 Centro di Controllo")
     
-    # AZIONI RAPIDE
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.subheader("🥛 Latte")
-        nuovo_l = st.number_input("Litri oggi:", value=st.session_state.litri)
-        if st.button("Salva Litri"):
-            st.session_state.litri = nuovo_l
+        st.subheader("🥛 Latte Oggi")
+        val_l = st.number_input("Litri munti:", value=st.session_state.produzione_latte)
+        if st.button("Salva Produzione"):
+            st.session_state.produzione_latte = val_l
             st.rerun()
 
     with col2:
-        st.subheader("📦 Magazzino")
-        p_sel = st.selectbox("Cosa hai prodotto?", list(st.session_state.prodotti.keys()))
-        q_add = st.number_input("Quantità da aggiungere:", min_value=0.0)
-        if st.button("Carica scorte"):
-            st.session_state.prodotti[p_sel] += q_add
+        st.subheader("📦 Carico Magazzino")
+        prodotto_da_caricare = st.selectbox("Scegli prodotto:", list(st.session_state.magazzino.keys()))
+        quantita_da_aggiungere = st.number_input("Quantità aggiunta:", min_value=0.0)
+        if st.button("Aggiorna Scorte"):
+            st.session_state.magazzino[prodotto_da_caricare] += quantita_da_aggiungere
             st.rerun()
 
     with col3:
         st.subheader("✨ Nuovo Prodotto")
-        nuovo_p = st.text_input("Nome nuovo (es. Mozzarella):")
+        nuovo_nome = st.text_input("Inserisci nome (es. Mozzarella):")
         if st.button("Aggiungi a Listino"):
-            if nuovo_p and nuovo_p not in st.session_state.prodotti:
-                st.session_state.prodotti[nuovo_p] = 0.0
+            if nuovo_nome and nuovo_nome not in st.session_state.magazzino:
+                st.session_state.magazzino[nuovo_nome] = 0.0
                 st.success("Aggiunto!")
                 st.rerun()
 
-    st.divider()
-
-    # RIEPILOGO VISIBILE
+    st.write("---")
+    
+    # RIEPILOGO DATI
+    st.subheader("📈 Riepilogo Attuale")
     m1, m2, m3 = st.columns(3)
     with m1:
-        st.write("🥛 **PRODUZIONE LATTE**")
-        st.markdown(f"<p class='big-font'>{st.session_state.litri} L</p>", unsafe_allow_html=True)
+        st.metric("LITRI LATTE", f"{st.session_state.produzione_latte} L")
     with m2:
-        df_v = pd.DataFrame(st.session_state.vendite)
-        incasso = df_v['Totale'].sum() if not df_v.empty else 0.0
-        st.write("💰 **INCASSO OGGI**")
-        st.markdown(f"<p class='big-font'>{incasso:.2f} €</p>", unsafe_allow_html=True)
+        df_v = pd.DataFrame(st.session_state.lista_vendite)
+        tot_soldi = df_v['Totale'].sum() if not df_v.empty else 0.0
+        st.metric("INCASSO OGGI", f"{tot_soldi:.2f} €")
     with m3:
-        st.write("📦 **SCORTE ATTUALI**")
-        for p, q in st.session_state.prodotti.items():
-            st.write(f"**{p}**: {q}")
+        st.write("**SCORTE IN MAGAZZINO:**")
+        for k, v in st.session_state.magazzino.items():
+            st.write(f"- {k}: {v}")
 
-# --- STALLA ---
-elif scelta == "🐄 STALLA":
+# --- PAGINA STALLA ---
+elif menu == "STALLA":
     st.header("🐄 Registro Stalla")
-    for i in range(st.session_state.m):
+    for i in range(st.session_state.numero_capi):
         with st.container():
-            c_a, c_b = st.columns(2)
-            with c_a: st.text_input(f"Codice Capo {i+1}", key=f"cod_{i}")
-            with c_b: st.selectbox("Stato", ["In mungitura", "Asciutta"], key=f"st_{i}")
-    if st.button("➕ Aggiungi Capo"):
-        st.session_state.m += 1
+            st.write(f"**Capo #{i+1}**")
+            c_cod, c_stato = st.columns(2)
+            with c_cod: st.text_input("Marca Auricolare", key=f"c_{i}")
+            with c_stato: st.selectbox("Stato", ["In Mungitura", "Asciutta"], key=f"s_{i}")
+    
+    if st.button("➕ Aggiungi altro Capo"):
+        st.session_state.numero_capi += 1
         st.rerun()
 
-# --- CASSA ---
-elif scelta == "🛒 CASSA":
+# --- PAGINA CASSA ---
+elif menu == "CASSA":
     st.header("🛒 Cassa e Vendite")
-    col_c, col_s = st.columns([1, 2])
+    col_a, col_b = st.columns([1, 2])
     
-    with col_c:
-        with st.form("vendita"):
-            prod = st.selectbox("Prodotto", list(st.session_state.prodotti.keys()))
-            prezzo = st.number_input("Prezzo (€)", min_value=0.0)
-            quant = st.number_input("Quantità", min_value=0.0)
-            if st.form_submit_button("REGISTRA VENDITA"):
-                st.session_state.vendite.append({"Prodotto": prod, "Totale": prezzo * quant})
-                st.session_state.prodotti[prod] -= quant
-                st.rerun()
+    with col_a:
+        st.subheader("Registra Vendita")
+        v_prod = st.selectbox("Prodotto venduto:", list(st.session_state.magazzino.keys()))
+        v_prezzo = st.number_input("Prezzo totale incassato (€):", min_value=0.0)
+        v_quant = st.number_input("Quantità scalata dal magazzino:", min_value=0.0)
+        if st.button("CONFERMA VENDITA"):
+            st.session_state.lista_vendite.append({"Prodotto": v_prod, "Totale": v_prezzo})
+            st.session_state.magazzino[v_prod] -= v_quant
+            st.success("Vendita registrata!")
+            st.rerun()
 
-    with col_s:
-        if st.session_state.vendite:
-            st.table(pd.DataFrame(st.session_state.vendite))
-            if st.button("Svuota Giornata"):
-                st.session_state.vendite = []
+    with col_b:
+        st.subheader("Storico di oggi")
+        if st.session_state.lista_vendite:
+            st.table(pd.DataFrame(st.session_state.lista_vendite))
+            if st.button("Svuota Storico"):
+                st.session_state.lista_vendite = []
                 st.rerun()
