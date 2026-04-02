@@ -163,4 +163,3 @@ elif menu == "🛒 Cassa e Vendite":
             if st.button("🗑️ Svuota Registro"):
                 st.session_state.registro_vendite = []
                 st.rerun()
-            
