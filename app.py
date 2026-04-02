@@ -1,101 +1,83 @@
 import streamlit as st
 
-# 1. CONFIGURAZIONE PAGINA
-st.set_page_config(page_title="Torretta Pro", layout="wide", initial_sidebar_state="expanded")
+# 1. Configurazione base
+st.set_page_config(page_title="Torretta Pro", layout="wide")
 
-# 2. CSS AGGRESSIVO PER ESTETICA PROFESSIONALE
+# 2. CSS "CORAZZATO" (Forza la scomparsa dei pallini e cambia i colori)
 st.markdown("""
 <style>
-    /* Sfondo generale e font */
-    .stApp {
-        background: linear-gradient(135deg, #f5f7f2 0%, #eef2e6 100%);
-    }
+    /* Sfondo e Sidebar */
+    .stApp { background-color: #FDFCF5 !important; }
+    section[data-testid="stSidebar"] { background-color: #ffffff !important; border-right: 1px solid #eee !important; }
 
-    /* ELIMINA DEFINITIVAMENTE I PALLINI E I CERCHIETTI DEL MENU */
-    [data-testid="stSidebarNav"] {display: none;}
+    /* --- TRUCCO DEFINITIVO PER I PALLINI --- */
+    /* Nasconde il cerchietto esterno e il pallino interno */
+    [data-testid="stWidgetLabel"] { display: none !important; }
+    div[role="radiogroup"] > label > div:first-child { display: none !important; }
     
-    /* Rende invisibili i radio button originali (pallini) */
-    div.row-widget.stRadio > div[role="radiogroup"] > label > div:first-child {
-        display: none !important;
-    }
-
-    /* TRASFORMA IL MENU IN BOTTONI MODERNI */
-    div.row-widget.stRadio > div[role="radiogroup"] > label {
-        background-color: rgba(255, 255, 255, 0.6) !important;
-        border: 1px solid rgba(0, 0, 0, 0.05) !important;
-        padding: 18px 25px !important;
-        border-radius: 15px !important;
-        margin-bottom: 12px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
-        transition: all 0.3s ease-in-out !important;
+    /* Trasforma l'etichetta in un bottone a tutta larghezza */
+    div[role="radiogroup"] > label {
+        background-color: #f8f9fa !important;
+        border: 1px solid #e0e0e0 !important;
+        padding: 12px 20px !important;
+        border-radius: 12px !important;
+        margin-bottom: 10px !important;
         width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
         cursor: pointer !important;
+        transition: all 0.3s ease !important;
     }
 
-    /* TESTO DEL MENU */
-    div.row-widget.stRadio > div[role="radiogroup"] > label p {
-        font-size: 1.1rem !important;
+    /* Stile del testo nel menu */
+    div[role="radiogroup"] > label p {
+        font-size: 18px !important;
         font-weight: 600 !important;
-        color: #444 !important;
-        text-align: left !important;
+        color: #333 !important;
         margin: 0 !important;
     }
 
-    /* EFFETTO SELEZIONE: IL TASTO DIVENTA VERDE TORRETTA */
-    div.row-widget.stRadio > div[role="radiogroup"] > label:has(input:checked) {
+    /* QUANDO SELEZIONATO: DIVENTA VERDE TORRETTA */
+    div[role="radiogroup"] > label:has(input:checked) {
         background-color: #1B5E20 !important;
-        border: none !important;
-        transform: translateX(10px) !important;
-        box-shadow: 0 10px 20px rgba(27, 94, 32, 0.2) !important;
+        border-color: #1B5E20 !important;
+        box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3) !important;
+    }
+    
+    div[role="radiogroup"] > label:has(input:checked) p {
+        color: #ffffff !important;
     }
 
-    div.row-widget.stRadio > div[role="radiogroup"] > label:has(input:checked) p {
-        color: white !important;
-    }
-
-    /* DASHBOARD CARD */
+    /* Dashboard Cards */
     .metric-card {
         background: white;
-        padding: 30px;
-        border-radius: 20px;
-        border-bottom: 5px solid #1B5E20;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        padding: 25px;
+        border-radius: 15px;
+        border-top: 5px solid #1B5E20;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         text-align: center;
     }
 
-    /* BOTTONI AZIONI (VERDI) */
-    .stButton>button {
-        width: 100%;
-        height: 120px;
-        font-size: 1.2rem !important;
-        font-weight: 800 !important;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%) !important;
+    /* Bottoni Dashboard */
+    .stButton > button {
+        width: 100% !important;
+        height: 100px !important;
+        background: linear-gradient(135deg, #2E7D32, #1B5E20) !important;
         color: white !important;
+        border-radius: 15px !important;
+        font-weight: bold !important;
+        font-size: 20px !important;
         border: none !important;
-        box-shadow: 0 8px 15px rgba(27, 94, 32, 0.2) !important;
-        transition: 0.3s !important;
-    }
-    
-    .stButton>button:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 20px rgba(27, 94, 32, 0.3) !important;
-    }
-
-    /* BARRA LATERALE */
-    [data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-        border-right: 1px solid #eee !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. SIDEBAR
+# 3. Sidebar
 with st.sidebar:
-    st.markdown("<h1 style='color: #1B5E20; font-size: 28px;'>🛡️ TORRETTA PRO</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #1B5E20; text-align: center;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
     st.write("---")
     
-    # Menu senza pallini
+    # Menu Radio (i CSS sopra lo trasformeranno in bottoni verdi)
     scelta = st.radio(
         "NAVIGAZIONE",
         ["📊 Dashboard", "🐄 Registro Stalla", "🧀 Punto Vendita", "🌦️ Meteo Radar"],
@@ -103,30 +85,22 @@ with st.sidebar:
     )
     
     st.write("---")
-    st.markdown("<p style='text-align:center; color:gray;'>Leonardo | v2.0</p>", unsafe_allow_html=True)
+    st.caption("Operatore: Leonardo | v2.1")
 
-# 4. PAGINE
+# 4. Pagine
 if scelta == "📊 Dashboard":
     st.title("📊 Centro di Controllo")
-    
     c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown('<div class="metric-card"><p style="color:gray;">🥛 LATTE OGGI</p><h2>1.240 L</h2></div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown('<div class="metric-card"><p style="color:gray;">💰 INCASSO</p><h2>450 €</h2></div>', unsafe_allow_html=True)
-    with c3:
-        st.markdown('<div class="metric-card"><p style="color:gray;">🌦️ PIOGGIA</p><h2>12 mm</h2></div>', unsafe_allow_html=True)
+    with c1: st.markdown('<div class="metric-card"><h4>🥛 LATTE OGGI</h4><h2>1.240 L</h2></div>', unsafe_allow_html=True)
+    with c2: st.markdown('<div class="metric-card"><h4>💰 VENDITE</h4><h2>450 €</h2></div>', unsafe_allow_html=True)
+    with c3: st.markdown('<div class="metric-card"><h4>🌦️ PIOGGIA</h4><h2>12 mm</h2></div>', unsafe_allow_html=True)
 
     st.write("##")
     st.subheader("⚡ Operazioni Rapide")
-    
     b1, b2, b3 = st.columns(3)
-    with b1:
-        if st.button("📝\nSEGNA\nLATTE"): st.toast("Caricamento Stalla...")
-    with b2:
-        if st.button("🛒\nNUOVA\nVENDITA"): st.toast("Caricamento Cassa...")
-    with b3:
-        if st.button("🌦️\nCONTROLLA\nMETEO"): st.toast("Caricamento Radar...")
+    with b1: st.button("SEGNA LATTE")
+    with b2: st.button("VENDITA")
+    with b3: st.button("RADAR")
 
 elif scelta == "🐄 Registro Stalla":
     st.title("🐄 Registro Stalla")
@@ -136,7 +110,7 @@ elif scelta == "🐄 Registro Stalla":
 elif scelta == "🧀 Punto Vendita":
     st.title("🧀 Punto Vendita")
     st.number_input("Incasso (€)", min_value=0.0)
-    st.button("REGISTRA VENDITA")
+    st.button("REGISTRA")
 
 elif scelta == "🌦️ Meteo Radar":
     st.title("🌦️ Radar Pioggia Real-Time")
