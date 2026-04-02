@@ -1,100 +1,144 @@
 import streamlit as st
 
-st.set_page_config(page_title="Torretta Pro", layout="wide")
+# 1. CONFIGURAZIONE PAGINA
+st.set_page_config(page_title="Torretta Pro", layout="wide", initial_sidebar_state="expanded")
 
-# CSS - MENU A BOTTONI VERDI SENZA PALLINI
+# 2. CSS AGGRESSIVO PER ESTETICA PROFESSIONALE
 st.markdown("""
 <style>
-    .stApp { background-color: #FDFCF5; }
+    /* Sfondo generale e font */
+    .stApp {
+        background: linear-gradient(135deg, #f5f7f2 0%, #eef2e6 100%);
+    }
+
+    /* ELIMINA DEFINITIVAMENTE I PALLINI E I CERCHIETTI DEL MENU */
     [data-testid="stSidebarNav"] {display: none;}
     
-    /* TRASFORMA RADIO IN BOTTONI NEL MENU */
+    /* Rende invisibili i radio button originali (pallini) */
+    div.row-widget.stRadio > div[role="radiogroup"] > label > div:first-child {
+        display: none !important;
+    }
+
+    /* TRASFORMA IL MENU IN BOTTONI MODERNI */
     div.row-widget.stRadio > div[role="radiogroup"] > label {
-        background-color: white;
-        padding: 12px 20px !important;
-        border-radius: 12px !important;
-        border: 1px solid #E0E0E0 !important;
-        margin-bottom: 10px !important;
-        transition: all 0.3s ease !important;
-        width: 100%;
+        background-color: rgba(255, 255, 255, 0.6) !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        padding: 18px 25px !important;
+        border-radius: 15px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+        transition: all 0.3s ease-in-out !important;
+        width: 100% !important;
+        cursor: pointer !important;
     }
-    
-    /* NASCONDE IL CERCHIETTO FISICO */
-    div.row-widget.stRadio > div[role="radiogroup"] > label div:first-child { display: none !important; }
 
-    /* TESTO MENU */
+    /* TESTO DEL MENU */
     div.row-widget.stRadio > div[role="radiogroup"] > label p {
-        font-size: 18px !important;
+        font-size: 1.1rem !important;
         font-weight: 600 !important;
+        color: #444 !important;
+        text-align: left !important;
         margin: 0 !important;
-        text-align: center;
     }
 
-    /* EFFETTO SELEZIONE VERDE */
+    /* EFFETTO SELEZIONE: IL TASTO DIVENTA VERDE TORRETTA */
     div.row-widget.stRadio > div[role="radiogroup"] > label:has(input:checked) {
         background-color: #1B5E20 !important;
         border: none !important;
+        transform: translateX(10px) !important;
+        box-shadow: 0 10px 20px rgba(27, 94, 32, 0.2) !important;
     }
-    
+
     div.row-widget.stRadio > div[role="radiogroup"] > label:has(input:checked) p {
         color: white !important;
     }
 
-    /* CARD DASHBOARD */
+    /* DASHBOARD CARD */
     .metric-card {
-        background-color: white;
-        padding: 20px;
-        border-radius: 15px;
-        border-top: 5px solid #1B5E20;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        border-bottom: 5px solid #1B5E20;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         text-align: center;
     }
 
-    /* BOTTONI AZIONI RAPIDE */
+    /* BOTTONI AZIONI (VERDI) */
     .stButton>button {
-        height: 80px;
-        font-size: 18px !important;
-        font-weight: bold;
-        border-radius: 12px;
-        background-color: #2E7D32 !important;
+        width: 100%;
+        height: 120px;
+        font-size: 1.2rem !important;
+        font-weight: 800 !important;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%) !important;
         color: white !important;
+        border: none !important;
+        box-shadow: 0 8px 15px rgba(27, 94, 32, 0.2) !important;
+        transition: 0.3s !important;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 20px rgba(27, 94, 32, 0.3) !important;
+    }
+
+    /* BARRA LATERALE */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        border-right: 1px solid #eee !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# SIDEBAR
+# 3. SIDEBAR
 with st.sidebar:
-    st.markdown("<h2 style='text-align:center; color:#1B5E20;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
-    scelta = st.radio("MENU", ["📊 Dashboard", "🐄 Stalla", "🧀 Vendite", "🌦️ Meteo"], label_visibility="collapsed")
-
-# LOGICA PAGINE
-if scelta == "📊 Dashboard":
-    st.title("📊 Riepilogo Aziendale")
-    c1, c2, c3 = st.columns(3)
-    with c1: st.markdown('<div class="metric-card"><h4>🥛 Latte</h4><h2>1.240 L</h2></div>', unsafe_allow_html=True)
-    with c2: st.markdown('<div class="metric-card"><h4>💰 Vendite</h4><h2>450 €</h2></div>', unsafe_allow_html=True)
-    with c3: st.markdown('<div class="metric-card"><h4>🌦️ Pioggia</h4><h2>12 mm</h2></div>', unsafe_allow_html=True)
+    st.markdown("<h1 style='color: #1B5E20; font-size: 28px;'>🛡️ TORRETTA PRO</h1>", unsafe_allow_html=True)
+    st.write("---")
     
-    st.write("##")
-    st.subheader("⚡ Azioni Rapide")
-    b1, b2, b3 = st.columns(3)
-    with b1: st.button("➕ REGISTRA LATTE")
-    with b2: st.button("🛒 NUOVA VENDITA")
-    with b3: st.button("📡 VEDI RADAR")
+    # Menu senza pallini
+    scelta = st.radio(
+        "NAVIGAZIONE",
+        ["📊 Dashboard", "🐄 Registro Stalla", "🧀 Punto Vendita", "🌦️ Meteo Radar"],
+        label_visibility="collapsed"
+    )
+    
+    st.write("---")
+    st.markdown("<p style='text-align:center; color:gray;'>Leonardo | v2.0</p>", unsafe_allow_html=True)
 
-elif scelta == "🐄 Stalla":
+# 4. PAGINE
+if scelta == "📊 Dashboard":
+    st.title("📊 Centro di Controllo")
+    
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown('<div class="metric-card"><p style="color:gray;">🥛 LATTE OGGI</p><h2>1.240 L</h2></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown('<div class="metric-card"><p style="color:gray;">💰 INCASSO</p><h2>450 €</h2></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown('<div class="metric-card"><p style="color:gray;">🌦️ PIOGGIA</p><h2>12 mm</h2></div>', unsafe_allow_html=True)
+
+    st.write("##")
+    st.subheader("⚡ Operazioni Rapide")
+    
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button("📝\nSEGNA\nLATTE"): st.toast("Caricamento Stalla...")
+    with b2:
+        if st.button("🛒\nNUOVA\nVENDITA"): st.toast("Caricamento Cassa...")
+    with b3:
+        if st.button("🌦️\nCONTROLLA\nMETEO"): st.toast("Caricamento Radar...")
+
+elif scelta == "🐄 Registro Stalla":
     st.title("🐄 Registro Stalla")
-    st.number_input("Litri totali", min_value=0.0)
+    st.number_input("Litri munti", min_value=0.0)
     st.button("SALVA DATI")
 
-elif scelta == "🧀 Vendite":
-    st.title("🧀 Gestione Cassa")
+elif scelta == "🧀 Punto Vendita":
+    st.title("🧀 Punto Vendita")
     st.number_input("Incasso (€)", min_value=0.0)
-    st.button("REGISTRA")
+    st.button("REGISTRA VENDITA")
 
-elif scelta == "🌦️ Meteo":
+elif scelta == "🌦️ Meteo Radar":
     st.title("🌦️ Radar Pioggia Real-Time")
-    # Radar professionale interattivo centrato sulla Puglia
     radar_url = "https://www.rainviewer.com/map.html?loc=41.46,15.54,8&type=radar&isVis_0=1&opacity_0=0.7&isPlay=1&isLoop=1&color=6"
-    st.components.v1.iframe(radar_url, height=500)
-    st.info("Puoi zoomare sulla mappa per vedere i tuoi campi.")
+    st.components.v1.iframe(radar_url, height=600)
