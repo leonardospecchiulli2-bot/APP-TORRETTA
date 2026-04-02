@@ -1,97 +1,83 @@
 import streamlit as st
-import pandas as pd
 
-# 1. Configurazione Pagina e Stile Avanzato (CSS)
+# 1. Configurazione Pagina
 st.set_page_config(page_title="Torretta Smart Pro", page_icon="🛡️", layout="wide")
 
+# 2. Design Personalizzato (CSS)
 st.markdown("""
     <style>
-    /* 🎨 TAVOLOZZA COLORI AZIENDALE */
-    :root {
-        --bg-color: #FDFCF5; /* Crema chiarissimo per lo sfondo */
-        --card-color: #FFFFFF; /* Bianco per i riquadri dati */
-        --primary-green: #1B5E20; /* Verde scuro per titoli e bordi */
-        --action-green: #2E7D32; /* Verde intermedio per i bottoni */
-        --text-dark: #333333;
-    }
-
-    /* Sfondo generale della pagina */
-    .stApp {
-        background-color: var(--bg-color);
-        color: var(--text-dark);
-    }
-
-    /* Stile dei Titoli Principali (h1, h2) */
-    h1, h2, h3 {
-        color: var(--primary-green) !important;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-weight: 700 !important;
-    }
-
-    /* Card per i quadratoni della dashboard (Metriche) */
+    .stApp { background-color: #FDFCF5; color: #333333; }
+    h1, h2, h3 { color: #1B5E20 !important; font-family: sans-serif; }
+    
+    /* Card Metriche */
     .metric-card {
-        background-color: var(--card-color);
-        padding: 25px;
-        border-radius: 20px;
-        border-top: 6px solid var(--primary-green); /* Bordo colorato in alto */
-        box-shadow: 0 6px 12px rgba(0,0,0,0.08); /* Ombra più morbida */
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        border-top: 5px solid #1B5E20;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         text-align: center;
-        transition: transform 0.2s;
+        margin-bottom: 20px;
     }
-    .metric-card:hover {
-        transform: translateY(-5px); /* Effetto al passaggio del mouse */
-    }
-    .metric-card h4 {
-        color: #757575;
-        margin-bottom: 5px;
-        font-size: 1.1rem;
-    }
-    .metric-card h2 {
-        margin: 0;
-        font-size: 2.8rem;
-    }
-
-    /* Bottoni stile "Azione Rapida" (Grandi a quadretti) */
+    
+    /* Bottoni Grandi Verdi */
     .stButton>button {
-        height: 90px;
-        font-size: 19px !important;
+        height: 100px;
+        font-size: 20px !important;
         font-weight: bold;
         border-radius: 15px;
+        background-color: #2E7D32 !important;
+        color: white !important;
         border: none;
-        background-color: var(--action-green); /* Colore pieno */
-        color: white !important; /* Testo bianco */
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        transition: all 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: var(--primary-green); /* Più scuro al passaggio */
-        box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-        transform: scale(1.03);
-    }
-    
-    /* Bottoni secondari (es. "Torna Indietro") */
-    .stButton>button.secondary-btn {
-        background-color: #f0f0f0;
-        color: #333 !important;
-        height: 50px;
-        font-size: 16px !important;
-    }
-
-    /* Stile dei Container per i Form (Stalla, Vendite) */
-    .data-form-container {
-        background-color: var(--card-color);
-        padding: 30px;
-        border-radius: 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        border: 1px solid #eee;
-    }
-    
-    /* Personalizzazione Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #f1f3f1; /* Grigio-verde chiarissimo */
-        border-right: 1px solid #ddd;
-    }
-    section[data-testid="stSidebar"] h1 {
-        color: var(--primary-green) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     </style>
+    """, unsafe_allow_html=True)
+
+# 3. Sidebar
+with st.sidebar:
+    st.title("🛡️ Torretta Pro")
+    st.markdown("---")
+    scelta = st.radio("MENU", ["📊 Dashboard", "🐄 Stalla", "🧀 Vendite", "🌦️ Meteo"])
+    st.markdown("---")
+    st.caption("Accesso: Leonardo")
+
+# 4. Pagine
+if scelta == "📊 Dashboard":
+    st.title("📊 Riepilogo Aziendale")
+    
+    # Metriche
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown('<div class="metric-card"><h4>🥛 Latte</h4><h2>1.240 L</h2></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown('<div class="metric-card"><h4>💰 Vendite</h4><h2>450 €</h2></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown('<div class="metric-card"><h4>🌦️ Pioggia</h4><h2>12 mm</h2></div>', unsafe_allow_html=True)
+
+    st.markdown("### ⚡ Azioni Rapide")
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button("➕ LATTE"): st.toast("Vai a sezione Stalla")
+    with b2:
+        if st.button("🛒 CASSA"): st.toast("Vai a sezione Vendite")
+    with b3:
+        if st.button("📡 RADAR"): st.toast("Caricamento...")
+
+elif scelta == "🐄 Stalla":
+    st.title("🐄 Registro Stalla")
+    with st.expander("Inserisci Nuova Mungitura", expanded=True):
+        litri = st.number_input("Litri totali", min_value=0.0)
+        if st.button("SALVA"):
+            st.success("Dato salvato!")
+
+elif scelta == "🧀 Vendite":
+    st.title("🧀 Punto Vendita")
+    euro = st.number_input("Incasso (€)", min_value=0.0)
+    if st.button("REGISTRA"):
+        st.balloons()
+        st.success("Vendita registrata!")
+
+elif scelta == "🌦️ Meteo":
+    st.title("🌦️ Meteo Radar")
+    st.image("https://www.meteoam.it/images/radar/radar_nazionale.png", use_container_width=True)
