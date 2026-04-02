@@ -1,16 +1,13 @@
 import streamlit as st
-import pd as pd
+import pandas as pd
 
-# 1. Configurazione base
 st.set_page_config(page_title="Torretta Pro", layout="wide")
 
-# 2. CSS - RIPRISTINO STILE PRO (Niente pallini, box eleganti)
+# CSS - DASHBOARD E STILE SENZA PALLINI
 st.markdown("""
 <style>
     .stApp { background-color: #FDFCF5 !important; }
     [data-testid="stSidebarNav"] {display: none;}
-    
-    /* Menu laterale senza pallini */
     div[role="radiogroup"] > label {
         background-color: white !important; border: 1px solid #e0e0e0 !important;
         padding: 12px 20px !important; border-radius: 12px !important;
@@ -21,8 +18,6 @@ st.markdown("""
         background-color: #1B5E20 !important; color: white !important;
     }
     div[role="radiogroup"] > label:has(input:checked) p { color: white !important; }
-
-    /* Box dei Capi nella Stalla */
     .capo-box {
         background: white; padding: 20px; border-radius: 15px;
         border-left: 8px solid #1B5E20; margin-bottom: 15px;
@@ -36,20 +31,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Gestione memoria per aggiunta capi
-if 'n_mung' not in st.session_state: st.session_state.n_mung = 1
-if 'n_vit' not in st.session_state: st.session_state.n_vit = 1
-if 'n_mas' not in st.session_state: st.session_state.n_mas = 1
+# Memoria per i capi
+if 'n_m' not in st.session_state: st.session_state.n_m = 1
+if 'n_v' not in st.session_state: st.session_state.n_v = 1
+if 'n_t' not in st.session_state: st.session_state.n_t = 1
 
-# 3. Sidebar
 with st.sidebar:
-    st.markdown("<h2 style='color: #1B5E20; text-align: center;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
-    st.write("---")
-    scelta = st.radio("NAV", ["📊 Dashboard", "🐄 Registro Stalla", "🧀 Punto Vendita"], label_visibility="collapsed")
-    st.write("---")
-    st.caption("Leonardo | v4.0")
+    st.markdown("<h2 style='color: #1B5E20;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
+    scelta = st.radio("NAV", ["📊 Dashboard", "🐄 Registro Stalla", "🧀 Vendite"], label_visibility="collapsed")
 
-# 4. Pagine
 if scelta == "📊 Dashboard":
     st.title("📊 Centro di Controllo")
     c1, c2, c3 = st.columns(3)
@@ -71,51 +61,51 @@ elif scelta == "🐄 Registro Stalla":
     t1, t2, t3 = st.tabs(["🥛 Mungitura", "👶 Vitelli", "🐂 Maschi"])
 
     with t1:
-        for i in range(st.session_state.n_mung):
-            col_d, col_f = st.columns([2, 1])
-            with col_d:
+        for i in range(st.session_state.n_m):
+            cd, cf = st.columns([2, 1])
+            with cd:
                 st.markdown('<div class="capo-box">', unsafe_allow_html=True)
-                cod = st.text_input(f"Codice Vacca", key=f"mc_{i}", placeholder="Marca Auricolare")
-                st.selectbox("Stato", ["In Mungitura", "Asciutta"], key=f"ms_{i}")
+                cod = st.text_input(f"Codice Vacca {i}", key=f"mc_{i}", placeholder="Marca Auricolare")
+                st.selectbox(f"Stato {i}", ["In Mungitura", "Asciutta"], key=f"ms_{i}")
                 st.markdown('</div>', unsafe_allow_html=True)
-            with col_f:
-                f = st.file_uploader(f"Foto {cod}", key=f"mf_{i}")
+            with cf:
+                f = st.file_uploader(f"Foto {i}", key=f"mf_{i}")
                 if f: st.image(f, width=150)
         if st.button("➕ Aggiungi Capo (Mungitura)"):
-            st.session_state.n_mung += 1
+            st.session_state.n_m += 1
             st.rerun()
 
     with t2:
-        for i in range(st.session_state.n_vit):
-            col_d, col_f = st.columns([2, 1])
-            with col_d:
+        for i in range(st.session_state.n_v):
+            cd, cf = st.columns([2, 1])
+            with cd:
                 st.markdown('<div class="capo-box">', unsafe_allow_html=True)
-                cod = st.text_input(f"Codice Vitello", key=f"vc_{i}", placeholder="Marca Auricolare")
-                st.selectbox("Stato", ["Da Segnare", "Da Vendere"], key=f"vs_{i}")
+                cod = st.text_input(f"Codice Vitello {i}", key=f"vc_{i}", placeholder="Marca Auricolare")
+                st.selectbox(f"Stato {i}", ["Da Segnare", "Da Vendere"], key=f"vs_{i}")
                 st.markdown('</div>', unsafe_allow_html=True)
-            with col_f:
-                f = st.file_uploader(f"Foto {cod}", key=f"vf_{i}")
+            with cf:
+                f = st.file_uploader(f"Foto {i}", key=f"vf_{i}")
                 if f: st.image(f, width=150)
         if st.button("➕ Aggiungi Capo (Vitelli)"):
-            st.session_state.n_vit += 1
+            st.session_state.n_v += 1
             st.rerun()
 
     with t3:
-        for i in range(st.session_state.n_mas):
-            col_d, col_f = st.columns([2, 1])
-            with col_d:
+        for i in range(st.session_state.n_t):
+            cd, cf = st.columns([2, 1])
+            with cd:
                 st.markdown('<div class="capo-box">', unsafe_allow_html=True)
-                cod = st.text_input(f"Codice Toro", key=f"tc_{i}", placeholder="Marca Auricolare")
-                st.selectbox("Stato", ["Toro", "Da Vendere"], key=f"ts_{i}")
+                cod = st.text_input(f"Codice Toro {i}", key=f"tc_{i}", placeholder="Marca Auricolare")
+                st.selectbox(f"Stato {i}", ["Toro", "Da Vendere"], key=f"ts_{i}")
                 st.markdown('</div>', unsafe_allow_html=True)
-            with col_f:
-                f = st.file_uploader(f"Foto {cod}", key=f"tf_{i}")
+            with cf:
+                f = st.file_uploader(f"Foto {i}", key=f"tf_{i}")
                 if f: st.image(f, width=150)
         if st.button("➕ Aggiungi Capo (Maschi)"):
-            st.session_state.n_mas += 1
+            st.session_state.n_t += 1
             st.rerun()
 
-elif scelta == "🧀 Punto Vendita":
+elif scelta == "🧀 Vendite":
     st.title("🧀 Gestione Vendite")
     st.number_input("Incasso totale €", min_value=0.0)
     st.button("Registra Vendita")
