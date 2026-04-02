@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 # 1. SETTINGS
