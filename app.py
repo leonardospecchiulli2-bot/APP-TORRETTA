@@ -1,172 +1,166 @@
 import streamlit as st
 import pandas as pd
 
-# 1. SETUP INIZIALE
-st.set_page_config(page_title="Torretta Pro v5.3", layout="wide")
+# 1. CONFIGURAZIONE PAGINA
+st.set_page_config(page_title="Torretta Management Pro", layout="wide", page_icon="🐄")
 
-# 2. INIZIALIZZAZIONE MEMORIA (Nomi nuovi per evitare AttributeError)
-if 'stalla_m' not in st.session_state: st.session_state.stalla_m = 1
-if 'stalla_v' not in st.session_state: st.session_state.stalla_v = 1
-if 'stalla_t' not in st.session_state: st.session_state.stalla_t = 1
-if 'latte_record' not in st.session_state: st.session_state.latte_record = 1240
-if 'inv_prodotti' not in st.session_state: 
-    st.session_state.inv_prodotti = {"Latte": 0, "Caciocavallo": 0, "Ricotta": 0}
-if 'cassa_oggi' not in st.session_state: st.session_state.cassa_oggi = []
+# 2. INIZIALIZZAZIONE MEMORIA (Database dell'app)
+if 'prodotti_list' not in st.session_state:
+    # Qui aggiungi i prodotti base. Quelli nuovi che scriverai si aggiungeranno qui sotto.
+    st.session_state.prodotti_list = {"Latte": 0, "Caciocavallo": 0, "Ricotta": 0}
+if 'latte_di_oggi' not in st.session_state: st.session_state.latte_di_oggi = 1240
+if 'registro_vendite' not in st.session_state: st.session_state.registro_vendite = []
+if 'c_mung' not in st.session_state: st.session_state.c_mung = 1
+if 'c_vit' not in st.session_state: st.session_state.c_vit = 1
+if 'c_mas' not in st.session_state: st.session_state.c_mas = 1
 
-# 3. CSS - DESIGN PULITO
+# 3. CSS - DESIGN PROFESSIONALE
 st.markdown("""
 <style>
-    .stApp { background-color: #FDFCF5 !important; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
+    .stApp { background-color: #F8F9FA !important; }
+    
+    /* Menu Laterale */
     [data-testid="stSidebarNav"] {display: none;}
     div[role="radiogroup"] > label {
-        background-color: white !important; border: 1px solid #e0e0e0 !important;
-        padding: 12px 20px !important; border-radius: 12px !important;
-        margin-bottom: 8px !important; display: flex !important; cursor: pointer !important;
+        background: white !important; border: 1px solid #E0E0E0 !important;
+        padding: 15px !important; border-radius: 10px !important;
+        margin-bottom: 10px !important; font-weight: 600 !important;
     }
-    div[role="radiogroup"] > label > div:first-child { display: none !important; }
     div[role="radiogroup"] > label:has(input:checked) {
-        background-color: #1B5E20 !important; color: white !important;
+        background: #2E7D32 !important; color: white !important;
+        border: 1px solid #1B5E20 !important; box-shadow: 0 4px 12px rgba(46,125,50,0.2) !important;
     }
-    div[role="radiogroup"] > label:has(input:checked) p { color: white !important; }
-    .box-pro {
-        background: white; padding: 20px; border-radius: 15px;
-        border-top: 5px solid #1B5E20; text-align: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+    /* Card Statistiche */
+    .stat-card {
+        background: white; padding: 25px; border-radius: 15px;
+        border: 1px solid #EAEAEA; border-bottom: 4px solid #2E7D32;
+        text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
-    .box-capo {
-        background: white; padding: 15px; border-radius: 12px;
-        border-left: 6px solid #1B5E20; margin-bottom: 10px;
+    .stat-val { color: #1B5E20; font-size: 28px; font-weight: 800; margin-top: 10px; }
+    
+    /* Box Capi e Cassa */
+    .st-expander { border: 1px solid #E0E0E0 !important; border-radius: 12px !important; background: white !important; }
+    .capo-container {
+        background: #FFFFFF; padding: 15px; border-radius: 10px;
+        border: 1px solid #E0E0E0; border-left: 5px solid #2E7D32; margin-bottom: 15px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 4. MENU LATERALE
+# 4. SIDEBAR
 with st.sidebar:
-    st.markdown("<h2 style='color: #1B5E20; text-align: center;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #1B5E20;'>🏢 TORRETTA PRO</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #666;'>v6.0 - Business Suite</p>", unsafe_allow_html=True)
     st.write("---")
-    menu = st.radio("NAV", ["📊 Dashboard", "🐄 Registro Stalla", "🛒 Cassa e Vendite"], label_visibility="collapsed")
+    menu = st.radio("NAVIGAZIONE", ["📊 Dashboard", "🐄 Registro Stalla", "🛒 Cassa e Vendite"], label_visibility="collapsed")
     st.write("---")
-    st.caption("v5.3 - Gestione Aziendale")
+    if st.button("🔄 Reset Cache Sistema"):
+        st.cache_data.clear()
+        st.rerun()
 
 # --- PAGINA DASHBOARD ---
 if menu == "📊 Dashboard":
     st.title("📊 Dashboard Operativa")
     
-    # AZIONI RAPIDE
-    st.subheader("⚡ Azioni Rapide")
-    c_latte, c_mag = st.columns(2)
-    
-    with c_latte:
-        with st.expander("🥛 REGISTRA PRODUZIONE LATTE"):
-            val = st.number_input("Litri di oggi", min_value=0, value=st.session_state.latte_record)
-            if st.button("Salva Produzione"):
-                st.session_state.latte_record = val
-                st.success("Dato aggiornato!")
+    # Sezione Azioni Rapide
+    with st.container():
+        st.markdown("<div style='background: #E8F5E9; padding: 20px; border-radius: 15px; margin-bottom: 25px;'>", unsafe_allow_html=True)
+        st.subheader("⚡ Azioni Veloci")
+        col_r1, col_r2, col_r3 = st.columns(3)
+        
+        with col_r1:
+            with st.expander("🥛 REGISTRA LATTE"):
+                nuovo_latte = st.number_input("Litri totali oggi", value=st.session_state.latte_di_oggi)
+                if st.button("Conferma Latte"):
+                    st.session_state.latte_di_oggi = nuovo_latte
+                    st.rerun()
+        
+        with col_r2:
+            with st.expander("📦 CARICO MAGAZZINO"):
+                p_carico = st.selectbox("Cosa hai prodotto?", list(st.session_state.prodotti_list.keys()))
+                q_carico = st.number_input("Quantità aggiunta", min_value=0.0, step=0.5)
+                if st.button("Carica Scorte"):
+                    st.session_state.prodotti_list[p_carico] += q_carico
+                    st.success(f"{p_carico} aggiornato!")
+                    st.rerun()
 
-    with c_mag:
-        with st.expander("📦 CARICA PRODOTTI IN MAGAZZINO"):
-            p_n = st.selectbox("Cosa hai prodotto?", list(st.session_state.inv_prodotti.keys()))
-            p_q = st.number_input("Quantità aggiunta", min_value=0)
-            if st.button("Aggiorna Magazzino"):
-                st.session_state.inv_prodotti[p_n] += p_q
-                st.rerun()
+        with col_r3:
+            with st.expander("✨ NUOVO PRODOTTO"):
+                nuovo_nome = st.text_input("Nome Prodotto (es. Scamorza)")
+                if st.button("Aggiungi a Listino"):
+                    if nuovo_nome and nuovo_nome not in st.session_state.prodotti_list:
+                        st.session_state.prodotti_list[nuovo_nome] = 0
+                        st.success("Aggiunto!")
+                        st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.write("---")
+    # Indicatori
+    df_v = pd.DataFrame(st.session_state.registro_vendite)
+    incasso_tot = df_v['Totale'].sum() if not df_v.empty else 0
     
-    # METRICHE IN EVIDENZA
-    df_cassa = pd.DataFrame(st.session_state.cassa_oggi)
-    tot_soldi = df_cassa['Totale'].sum() if not df_cassa.empty else 0
-    
-    m1, m2, m3 = st.columns(3)
-    with m1: st.markdown(f'<div class="box-pro"><h4>🥛 LATTE OGGI</h4><h2>{st.session_state.latte_record} L</h2></div>', unsafe_allow_html=True)
-    with m2: st.markdown(f'<div class="box-pro"><h4>💰 INCASSO</h4><h2>{tot_soldi:.2f} €</h2></div>', unsafe_allow_html=True)
-    with m3:
-        st.markdown('<div class="box-pro"><h4>📦 MAGAZZINO</h4>', unsafe_allow_html=True)
-        for k, v in st.session_state.inv_prodotti.items():
-            st.write(f"**{k}:** {v}")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(f'<div class="stat-card"><span>🥛 PRODUZIONE LATTE</span><div class="stat-val">{st.session_state.latte_di_oggi} L</div></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="stat-card"><span>💰 INCASSO GIORNALIERO</span><div class="stat-val">{incasso_tot:.2f} €</div></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown('<div class="stat-card"><span>📦 DISPONIBILITÀ</span>', unsafe_allow_html=True)
+        for p, q in st.session_state.prodotti_list.items():
+            st.markdown(f"<div style='display:flex; justify-content:space-between;'><b>{p}:</b> <span>{q}</span></div>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
 # --- PAGINA REGISTRO STALLA ---
 elif menu == "🐄 Registro Stalla":
-    st.title("🐄 Registro Stalla")
-    t1, t2, t3 = st.tabs(["🥛 Mungitura", "👶 Vitelli", "🐂 Maschi"])
+    st.title("🐄 Registro Stalla Fotografico")
+    tab1, tab2, tab3 = st.tabs(["🥛 Mungitura", "👶 Vitelli / Giovani", "🐂 Maschi Adulti"])
 
-    with t1:
-        for i in range(st.session_state.stalla_m):
-            col_d, col_f = st.columns([2, 1])
-            with col_d:
-                st.markdown('<div class="box-capo">', unsafe_allow_html=True)
-                st.text_input("Codice", key=f"m_c_{i}", placeholder="Marca Auricolare")
-                st.selectbox("Stato", ["In Mungitura", "Asciutta"], key=f"m_s_{i}")
+    def crea_slot_capo(n, prefix, label):
+        for i in range(n):
+            with st.container():
+                st.markdown(f'<div class="capo-container">', unsafe_allow_html=True)
+                c_a, c_b, c_c = st.columns([2, 2, 1])
+                with c_a: st.text_input(f"Codice {label}", key=f"{prefix}_c_{i}", placeholder="Es. IT001")
+                with c_b: st.selectbox("Stato", ["In Produzione", "Asciutta", "In Vendita"], key=f"{prefix}_s_{i}")
+                with c_c:
+                    f = st.file_uploader("Foto", key=f"{prefix}_f_{i}", label_visibility="collapsed")
+                    if f: st.image(f, width=80)
                 st.markdown('</div>', unsafe_allow_html=True)
-            with col_f:
-                f = st.file_uploader("Foto", key=f"m_f_{i}")
-                if f: st.image(f, width=120)
-        if st.button("➕ Aggiungi Capo (Mungitura)"):
-            st.session_state.stalla_m += 1
-            st.rerun()
 
-    with t2:
-        for i in range(st.session_state.stalla_v):
-            col_d, col_f = st.columns([2, 1])
-            with col_d:
-                st.markdown('<div class="box-capo">', unsafe_allow_html=True)
-                st.text_input("Codice", key=f"v_c_{i}", placeholder="Marca Auricolare")
-                st.selectbox("Stato", ["Sotto Madre", "Svezzato"], key=f"v_s_{i}")
-                st.markdown('</div>', unsafe_allow_html=True)
-            with col_f:
-                f = st.file_uploader("Foto", key=f"v_f_{i}")
-                if f: st.image(f, width=120)
-        if st.button("➕ Aggiungi Capo (Vitelli)"):
-            st.session_state.stalla_v += 1
-            st.rerun()
-
-    with t3:
-        for i in range(st.session_state.stalla_t):
-            col_d, col_f = st.columns([2, 1])
-            with col_d:
-                st.markdown('<div class="box-capo">', unsafe_allow_html=True)
-                st.text_input("Codice", key=f"t_c_{i}", placeholder="Marca Auricolare")
-                st.selectbox("Stato", ["Toro", "Ingrasso"], key=f"t_s_{i}")
-                st.markdown('</div>', unsafe_allow_html=True)
-            with col_f:
-                f = st.file_uploader("Foto", key=f"t_f_{i}")
-                if f: st.image(f, width=120)
-        if st.button("➕ Aggiungi Capo (Maschi)"):
-            st.session_state.stalla_t += 1
-            st.rerun()
+    with tab1:
+        crea_slot_capo(st.session_state.c_mung, "m", "Vacca")
+        if st.button("➕ AGGIUNGI VACCA"): st.session_state.c_mung += 1; st.rerun()
+    with tab2:
+        crea_slot_capo(st.session_state.c_vit, "v", "Vitello")
+        if st.button("➕ AGGIUNGI VITELLO"): st.session_state.c_vit += 1; st.rerun()
+    with tab3:
+        crea_slot_capo(st.session_state.c_mas, "t", "Maschio")
+        if st.button("➕ AGGIUNGI MASCHIO"): st.session_state.c_mas += 1; st.rerun()
 
 # --- PAGINA CASSA ---
 elif menu == "🛒 Cassa e Vendite":
-    st.title("🛒 Cassa e Vendite")
-    cl1, cl2 = st.columns([1, 2])
+    st.title("🛒 Terminale Vendite")
+    col_vendita, col_storico = st.columns([1, 2])
     
-    with cl1:
-        st.subheader("🛒 Nuova Vendita")
-        with st.form("vendita_rapida"):
-            p_selezionato = st.selectbox("Prodotto", list(st.session_state.inv_prodotti.keys()))
-            p_prezzo = st.number_input("Prezzo unitario (€)", min_value=0.0, step=0.1)
-            p_quantita = st.number_input("Quantità", min_value=0.0, step=0.1)
-            if st.form_submit_button("Registra Vendita"):
-                tot = p_prezzo * p_quantita
-                st.session_state.cassa_oggi.append({"Prodotto": p_selezionato, "Totale": tot})
-                st.session_state.inv_prodotti[p_selezionato] -= p_quantita
-                st.success(f"Venduto {p_selezionato}!")
-                st.rerun()
-        
-        st.write("---")
-        nuovo_p = st.text_input("Aggiungi Prodotto a Listino")
-        if st.button("Crea Prodotto"):
-            if nuovo_p and nuovo_p not in st.session_state.inv_prodotti:
-                st.session_state.inv_prodotti[nuovo_p] = 0
+    with col_vendita:
+        st.subheader("Nuova Transazione")
+        with st.form("vendita_form"):
+            prod_sel = st.selectbox("Seleziona Prodotto", list(st.session_state.prodotti_list.keys()))
+            prezzo_u = st.number_input("Prezzo (€)", min_value=0.0, step=0.5)
+            quantita_v = st.number_input("Quantità", min_value=0.0, step=0.1)
+            if st.form_submit_button("✅ REGISTRA VENDITA"):
+                totale = prezzo_u * quantita_v
+                st.session_state.registro_vendite.append({"Prodotto": prod_sel, "Totale": totale})
+                st.session_state.prodotti_list[prod_sel] -= quantita_v
                 st.rerun()
 
-    with cl2:
-        st.subheader("📜 Storico di Oggi")
-        if st.session_state.cassa_oggi:
-            st.table(pd.DataFrame(st.session_state.cassa_oggi))
-            if st.button("Cancella Storico"):
-                st.session_state.cassa_oggi = []
+    with col_storico:
+        st.subheader("Riepilogo Vendite")
+        if st.session_state.registro_vendite:
+            st.table(pd.DataFrame(st.session_state.registro_vendite))
+            if st.button("🗑️ Svuota Registro"):
+                st.session_state.registro_vendite = []
                 st.rerun()
-        else:
-            st.info("Inizia a vendere per vedere qui lo storico.")
+            
