@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-# 1. Configurazione
 st.set_page_config(page_title="Torretta Pro", layout="wide")
 
-# 2. CSS - STILE
+# CSS - STILE MENU
 st.markdown("""
 <style>
     .stApp { background-color: #FDFCF5 !important; }
@@ -22,38 +21,68 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Sidebar
 with st.sidebar:
     st.header("🛡️ TORRETTA PRO")
     scelta = st.radio("NAV", ["📊 Dashboard", "🐄 Registro Stalla", "🧀 Vendite", "🌦️ Meteo"], label_visibility="collapsed")
 
-# 4. Pagine
 if scelta == "📊 Dashboard":
     st.title("📊 Centro di Controllo")
     c1, c2, c3 = st.columns(3)
-    with c1: st.markdown('<div style="background:white;padding:20px;border-radius:15px;text-align:center;border-top:5px solid #1B5E20;"><h4>🥛 LATTE</h4><h2>1.240 L</h2></div>', unsafe_allow_html=True)
-    with c2: st.markdown('<div style="background:white;padding:20px;border-radius:15px;text-align:center;border-top:5px solid #1B5E20;"><h4>💰 EURO</h4><h2>450 €</h2></div>', unsafe_allow_html=True)
-    with c3: st.markdown('<div style="background:white;padding:20px;border-radius:15px;text-align:center;border-top:5px solid #1B5E20;"><h4>🌦️ PIOGGIA</h4><h2>12 mm</h2></div>', unsafe_allow_html=True)
+    with c1: st.info("🥛 LATTE OGGI: 1.240 L")
+    with c2: st.success("💰 EURO OGGI: 450 €")
+    with c3: st.warning("🌦️ PIOGGIA: 12 mm")
+    
+    col_l, col_e = st.columns(2)
+    with col_l: st.bar_chart(pd.DataFrame({'Litri': [1200, 1250, 1180, 1300, 1280]}, index=['L','M','M','G','V']), color="#2E7D32")
+    with col_e: st.bar_chart(pd.DataFrame({'Euro': [350, 410, 320, 500, 460]}, index=['L','M','M','G','V']), color="#FFA000")
 
 elif scelta == "🐄 Registro Stalla":
-    st.title("🐄 Registro Stalla Selettivo")
-    tab1, tab2, tab3 = st.tabs(["🥛 Mungitura", "👶 Vitelli", "🐂 Maschi"])
+    st.title("🐄 Registro Stalla Fotografico")
+    t1, t2, t3 = st.tabs(["🥛 Mungitura", "👶 Vitelli", "🐂 Maschi"])
 
-    # Funzione per generare i box con opzioni diverse
-    def crea_box_capo(cat_nome, opzioni, prefisso_cod):
-        st.subheader(f"Elenco {cat_nome}")
-        for i in range(1, 4):
-            with st.container():
-                c_dati, c_foto = st.columns([2, 1])
-                with c_dati:
-                    st.markdown('<div class="capo-box">', unsafe_allow_html=True)
-                    cod = st.text_input(f"Codice", value=f"{prefisso_cod}{i}", key=f"c_{cat_nome}_{i}")
-                    stato = st.selectbox(f"Destinazione/Stato", opzioni, key=f"s_{cat_nome}_{i}")
-                    st.markdown('</div>', unsafe_allow_html=True)
-                with c_foto:
-                    f = st.file_uploader(f"Foto {cod}", type=['jpg','png','jpeg'], key=f"f_{cat_nome}_{i}")
-                    if f: st.image(f, width=150)
-                st.write("---")
+    with t1:
+        st.subheader("Capi in Mungitura")
+        for i in range(1, 3):
+            c_d, c_f = st.columns([2, 1])
+            with c_d:
+                st.markdown('<div class="capo-box">', unsafe_allow_html=True)
+                cod = st.text_input(f"Codice Vacca {i}", value=f"IT-M0{i}", key=f"m_{i}")
+                st.selectbox(f"Stato {cod}", ["In Mungitura", "Asciutta"], key=f"sm_{i}")
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c_f:
+                f = st.file_uploader(f"Foto {cod}", type=['jpg','png'], key=f"fm_{i}")
+                if f: st.image(f, width=150)
 
-    with tab1:
-        crea_box_capo("Mungitura", ["
+    with t2:
+        st.subheader("Vitelli")
+        for i in range(1, 3):
+            c_d, c_f = st.columns([2, 1])
+            with c_d:
+                st.markdown('<div class="capo-box">', unsafe_allow_html=True)
+                cod = st.text_input(f"Codice Vitello {i}", value=f"IT-V0{i}", key=f"v_{i}")
+                st.selectbox(f"Stato {cod}", ["Da Segnare", "Da Vendere"], key=f"sv_{i}")
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c_f:
+                f = st.file_uploader(f"Foto {cod}", type=['jpg','png'], key=f"fv_{i}")
+                if f: st.image(f, width=150)
+
+    with t3:
+        st.subheader("Maschi Adulti")
+        for i in range(1, 2):
+            c_d, c_f = st.columns([2, 1])
+            with c_d:
+                st.markdown('<div class="capo-box">', unsafe_allow_html=True)
+                cod = st.text_input(f"Codice Toro {i}", value=f"IT-T0{i}", key=f"t_{i}")
+                st.selectbox(f"Stato {cod}", ["Toro", "Da Vendere"], key=f"st_{i}")
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c_f:
+                f = st.file_uploader(f"Foto {cod}", type=['jpg','png'], key=f"ft_{i}")
+                if f: st.image(f, width=150)
+
+elif scelta == "🧀 Vendite":
+    st.title("🧀 Cassa")
+    st.number_input("Incasso totale (€)")
+    st.button("Salva Vendita")
+
+elif scelta == "🌦️ Meteo":
+    st.components.v1.iframe("https://www.rainviewer.com/map.html?loc=41.46,15.54,8&isPlay=1&color=6", height=500)
