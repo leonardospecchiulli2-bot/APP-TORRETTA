@@ -5,13 +5,14 @@ import numpy as np
 # 1. Configurazione base
 st.set_page_config(page_title="Torretta Pro", layout="wide")
 
-# 2. CSS "EVOLUZIONE DASHBOARD"
+# 2. CSS "EVOLUZIONE DASHBOARD PRO"
 st.markdown("""
 <style>
+    /* Sfondo e Sidebar */
     .stApp { background-color: #FDFCF5 !important; }
     section[data-testid="stSidebar"] { background-color: #ffffff !important; border-right: 1px solid #eee !important; }
 
-    /* MENU SENZA PALLINI */
+    /* MENU SENZA PALLINI + ANIMAZIONI */
     [data-testid="stWidgetLabel"] { display: none !important; }
     div[role="radiogroup"] > label > div:first-child { display: none !important; }
     div[role="radiogroup"] > label {
@@ -24,6 +25,10 @@ st.markdown("""
         display: flex !important;
         cursor: pointer !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    div[role="radiogroup"] > label:hover {
+        background-color: #f0f4f0 !important;
+        transform: scale(1.02) !important;
     }
     div[role="radiogroup"] > label:has(input:checked) {
         background-color: #1B5E20 !important;
@@ -45,26 +50,41 @@ st.markdown("""
     /* CARD BIANCHE PER GRAFICI E TABELLE */
     .content-box {
         background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        padding: 25px;
+        border-radius: 18px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+        border: 1px solid #f0f0f0;
         height: 100%;
     }
 
-    /* NUOVI BOTTONI AZIONI (SOTTILI) */
+    /* BOTTONI AZIONI (SOTTILI) */
     .stButton > button {
         width: 100% !important;
-        height: 50px !important;
+        height: 55px !important;
         background-color: #ffffff !important;
         color: #1B5E20 !important;
         border: 2px solid #1B5E20 !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
         font-weight: bold !important;
+        font-size: 16px !important;
         transition: 0.3s !important;
+        margin-bottom: 10px;
     }
     .stButton > button:hover {
         background-color: #1B5E20 !important;
         color: white !important;
+        box-shadow: 0 4px 8px rgba(27, 94, 32, 0.2) !important;
+    }
+    .stButton > button:active {
+        transform: scale(0.97) !important;
+    }
+
+    /* Titoli sezioni bassi */
+    .section-title {
+        color: #1B5E20;
+        font-weight: 700;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -75,7 +95,7 @@ with st.sidebar:
     st.write("---")
     scelta = st.radio("NAV", ["📊 Dashboard", "🐄 Registro Stalla", "🧀 Punto Vendita", "🌦️ Meteo Radar"], label_visibility="collapsed")
     st.write("---")
-    st.caption("Leonardo | v2.3")
+    st.caption("Leonardo | v2.4")
 
 # 4. Pagine
 if scelta == "📊 Dashboard":
@@ -84,48 +104,22 @@ if scelta == "📊 Dashboard":
     # RIGA ALTA: LE CARD (QUELLE CHE TI PIACEVANO)
     c1, c2, c3 = st.columns(3)
     with c1: st.markdown('<div class="metric-card"><h4>🥛 LATTE OGGI</h4><h2>1.240 L</h2></div>', unsafe_allow_html=True)
-    with c2: st.markdown('<div class="metric-card"><h4>💰 VENDITE</h4><h2>450 €</h2></div>', unsafe_allow_html=True)
-    with c3: st.markdown('<div class="metric-card"><h4>🌦️ PIOGGIA</h4><h2>12 mm</h2></div>', unsafe_allow_html=True)
+    with c2: st.markdown('<div class="metric-card"><h4>💰 VENDITE OGGI</h4><h2>450 €</h2></div>', unsafe_allow_html=True)
+    with c3: st.markdown('<div class="metric-card"><h4>🌦️ PIOGGIA 7GG</h4><h2>12 mm</h2></div>', unsafe_allow_html=True)
 
     st.write("##")
 
-    # RIGA BASSA: LE TRE NOVITÀ (AZIONI, GRAFICO, STORICO)
-    col_azioni, col_grafico, col_storico = st.columns([1, 2, 1.5])
+    # RIGA BASSA: LE SEZIONI RIORGANIZZATE
+    col_azioni, col_grafici, col_storico = st.columns([1, 2.5, 1.5])
 
+    # ⚡ AZIONI RAPIDE
     with col_azioni:
-        st.markdown("##### ⚡ Azioni Rapide")
+        st.markdown('<p class="section-title">⚡ AZIONI RAPIDE</p>', unsafe_allow_html=True)
         if st.button("➕ Segna Latte"): st.toast("Vai a Stalla")
         if st.button("🛒 Nuova Vendita"): st.toast("Vai a Cassa")
-        if st.button("🌦️ Vedi Meteo"): st.toast("Vai a Radar")
         if st.button("🚜 Stato Mezzi"): st.toast("Funzione JD Prossimamente")
+        if st.button("📸 Carica Foto"): st.toast("In arrivo...")
 
-    with col_grafico:
-        st.markdown("##### 📈 Produzione Settimanale")
-        # Dati simulati per il grafico
-        chart_data = pd.DataFrame(np.random.randn(7, 1), columns=['Litri'])
-        st.area_chart(chart_data, color="#2E7D32")
-
-    with col_storico:
-        st.markdown("##### 📝 Ultime Attività")
-        dati_finti = {
-            "Ora": ["06:30", "08:45", "10:15", "11:00"],
-            "Attività": ["Mungitura", "Vendita Formaggio", "Mungitura", "Cassa"],
-            "Esito": ["✅ OK", "€ 45.00", "✅ OK", "€ 22.00"]
-        }
-        df = pd.DataFrame(dati_finti)
-        st.table(df)
-
-elif scelta == "🐄 Registro Stalla":
-    st.title("🐄 Registro Stalla")
-    st.number_input("Litri munti", min_value=0.0)
-    st.button("SALVA")
-
-elif scelta == "🧀 Punto Vendita":
-    st.title("🧀 Punto Vendita")
-    st.number_input("Incasso (€)", min_value=0.0)
-    st.button("REGISTRA")
-
-elif scelta == "🌦️ Meteo Radar":
-    st.title("🌦️ Radar Pioggia Real-Time")
-    radar_url = "https://www.rainviewer.com/map.html?loc=41.46,15.54,8&type=radar&isVis_0=1&opacity_0=0.7&isPlay=1&isLoop=1&color=6"
-    st.components.v1.iframe(radar_url, height=600)
+    # 📈 I DUE GRAFICI AFFIANCATI (PRODUZIONE E ENTRATE)
+    with col_grafici:
+        st.markdown('<div class="content-box">', unsafe_allow
