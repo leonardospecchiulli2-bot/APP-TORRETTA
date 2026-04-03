@@ -4,4 +4,4 @@ streamlit-lottie
 pandas
 requests
 requests_oauthlib
-streamlit-option-menu
+plotly
