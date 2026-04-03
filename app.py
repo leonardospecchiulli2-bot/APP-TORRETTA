@@ -1,93 +1,68 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 from streamlit_option_menu import option_menu
 
-# 1. CONFIGURAZIONE E STILE "APP MOBILE"
-st.set_page_config(page_title="Torretta Pro", layout="wide", page_icon="🐄")
+# SETUP
+st.set_page_config(page_title="Torretta Smart", layout="wide")
 
-# CSS Esterno per rendere i bottoni enormi sul telefono
+# MEMORIA DATI
+if 'storia_latte' not in st.session_state:
+    st.session_state.storia_latte = pd.DataFrame({'Giorno': ['Lun', 'Mar', 'Mer'], 'Litri': [1200, 1250, 1240]})
+if 'prodotti' not in st.session_state:
+    st.session_state.prodotti = {"Latte": 1240, "Caciocavallo": 10, "Ricotta": 5}
+if 'euro_oggi' not in st.session_state: st.session_state.euro_oggi = 0.0
+
+# STILE
 st.markdown("""
 <style>
-    .stButton>button {
-        width: 100%; border-radius: 15px; height: 3em;
-        background-color: #2E7D32; color: white; font-weight: bold;
-        border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .main { background-color: #F0F2F5; }
-    .stMetric { background-color: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    [data-testid="stSidebarNav"] {display: none;}
+    .stMetric { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .stButton>button { height: 60px; border-radius: 15px; font-size: 18px !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# 2. MENU ESTERNO (Molto più bello)
+# MENU
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2304/2304779.png", width=100)
-    selected = option_menu(
-        menu_title="Torretta Menu",
-        options=["Dashboard", "Stalla", "Cassa", "JD-Link"],
-        icons=["house", "cow", "cart", "gear"],
-        menu_icon="cast",
-        default_index=0,
-        styles={
-            "container": {"padding": "5!important", "background-color": "#1E3A34"},
-            "icon": {"color": "#81C784", "font-size": "25px"}, 
-            "nav-link": {"font-size": "18px", "text-align": "left", "margin":"5px", "color": "white"},
-            "nav-link-selected": {"background-color": "#2E7D32"},
-        }
-    )
+    st.markdown("## 🛡️ TORRETTA")
+    scelta = option_menu(None, ["Home", "Stalla", "Cassa", "JD-Link"], 
+        icons=['house', 'cow', 'cart', 'truck'], default_index=0)
 
-# 3. DATABASE
-if 'prod' not in st.session_state: st.session_state.prod = {"Latte": "0", "Formaggio": "0"}
-if 'v_reg' not in st.session_state: st.session_state.v_reg = []
-if 'capi' not in st.session_state: st.session_state.capi = []
-
-# --- LOGICA PAGINE ---
-
-if selected == "Dashboard":
-    st.markdown("### 📊 Produzione Odierna")
-    cols = st.columns(len(st.session_state.prod))
-    for i, (p, q) in enumerate(st.session_state.prod.items()):
-        with cols[i]:
-            st.metric(label=p, value=q)
+if scelta == "Home":
+    st.title("📊 Riepilogo Produzione")
     
-    st.markdown("---")
-    with st.expander("📝 Modifica Dati"):
-        for p in list(st.session_state.prod.keys()):
-            st.session_state.prod[p] = st.text_input(f"Aggiorna {p}", value=st.session_state.prod[p])
+    # METRICHE IN ALTO
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Latte in Tanica", f"{st.session_state.prodotti['Latte']} L")
+    c2.metric("Formaggi pronti", f"{st.session_state.prodotti['Caciocavallo']} pz")
+    c3.metric("Incasso del Giorno", f"{st.session_state.euro_oggi} €")
 
-elif selected == "Stalla":
-    st.title("🐄 Registro Animali")
-    tipo = st.segmented_control("Categoria", ["Vacche", "Vitelli", "Maschi"], default="Vacche")
+    st.write("---")
+    # GRAFICO SETTIMANALE
+    st.subheader("📈 Andamento Produzione Latte")
+    fig = px.line(st.session_state.storia_latte, x='Giorno', y='Litri', markers=True, color_discrete_sequence=['#2E7D32'])
+    st.plotly_chart(fig, use_container_width=True)
+
+elif scelta == "Cassa":
+    st.title("🛒 Vendita Rapida")
+    st.write("Tocca il prodotto per registrarne la vendita")
     
-    with st.form("stalla_form"):
-        c1, c2 = st.columns(2)
-        m_aur = c1.text_input("Marca Auricolare")
-        m_stato = c2.selectbox("Stato", ["Mungitura", "Asciutta", "Ingrasso", "Svezzamento"])
-        if st.form_submit_button("REGISTRA CAPO"):
-            st.session_state.capi.append({"Tipo": tipo, "Codice": m_aur, "Stato": m_stato})
-            st.success("Registrato!")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🥛 Vendi 1L Latte (1.50€)"):
+            st.session_state.prodotti['Latte'] -= 1
+            st.session_state.euro_oggi += 1.50
+            st.toast("Latte venduto!")
+    with col2:
+        if st.button("🧀 Vendi 1 Caciocavallo (15€)"):
+            st.session_state.prodotti['Caciocavallo'] -= 1
+            st.session_state.euro_oggi += 15.0
+            st.toast("Formaggio venduto!")
 
-    if st.session_state.capi:
-        df_c = pd.DataFrame(st.session_state.capi)
-        st.dataframe(df_c[df_c['Tipo'] == tipo], use_container_width=True)
+elif scelta == "JD-Link":
+    st.title("🚜 Configurazione John Deere")
+    st.info("Pausa: in attesa dell'autorizzazione del proprietario dell'account.")
+    st.write("Quando tuo padre sarà disponibile, premeremo insieme il tasto 'Invia Richiesta' sul portale.")
 
-elif selected == "Cassa":
-    st.title("🛒 Terminale Vendita")
-    with st.container():
-        p_v = st.selectbox("Cosa stai vendendo?", list(st.session_state.prod.keys()))
-        e_v = st.number_input("Prezzo (€)", min_value=0.0)
-        if st.button("CONFERMA VENDITA"):
-            st.session_state.v_reg.append({"Prod": p_v, "Euro": e_v})
-            st.balloons() # Effetto grafico per la vendita!
-    
-    if st.session_state.v_reg:
-        df_v = pd.DataFrame(st.session_state.v_reg)
-        st.table(df_v)
-        st.write(f"### Totale Incassato: {df_v['Euro'].sum():.2f} €")
-
-elif selected == "JD-Link":
-    st.title("🚜 Gestione Macchine")
-    st.warning("Sezione Manutenzione Mezzi John Deere")
-    mezzo = st.selectbox("Seleziona Mezzo", ["Trattore 6120", "Trattore 5050", "Mietitrebbia", "Altro"])
-    ore = st.number_input("Ore attuali", min_value=0)
-    if st.button("Salva Report Ore"):
-        st.success(f"Ore del {mezzo} aggiornate a {ore}")
+# STALLA (Versione semplice per ora)
+elif scelta == "Stalla": st.title("🐄 Registro Stalla")
