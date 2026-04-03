@@ -5,7 +5,7 @@ from streamlit_option_menu import option_menu
 from datetime import datetime
 
 # --- 1. CONFIGURAZIONE ---
-st.set_page_config(page_title="Torretta Management PRO", layout="wide", page_icon="🌿")
+st.set_page_config(page_title="Torretta Management PRO", layout="wide", page_icon="🐄")
 
 # --- 2. STILE BEIGE & VERDE ELITE ---
 st.markdown("""
@@ -30,27 +30,26 @@ st.markdown("""
         background-color: #2E7D32; color: #FDFBF0; border-radius: 10px;
         font-weight: bold; height: 3.5em; width: 100%; border: none;
     }
-    .stButton>button:hover { background-color: #1B3022; border: 1px solid #2E7D32; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DATABASE COMPLETO (SESSION STATE) ---
+# --- 3. DATABASE COMPLETO ---
 if 'stalla_db' not in st.session_state:
     st.session_state.stalla_db = pd.DataFrame([
-        {'ID': 'IT001', 'Nome': 'Regina', 'Stato': 'Lattazione', 'Salute': 'Ottima', 'Mungitura': '06:00', 'Litri': 32},
-        {'ID': 'IT002', 'Nome': 'Mora', 'Stato': 'Asciutta', 'Salute': 'Monitoraggio', 'Mungitura': '-', 'Litri': 0}
+        {'Marca': 'IT001', 'Nome': 'Regina', 'Sesso': 'Femmina', 'Categoria': 'Vacca', 'Stato': 'Lattazione', 'Litri': 32},
+        {'Marca': 'IT005', 'Nome': 'Toro', 'Sesso': 'Maschio', 'Categoria': 'Torello', 'Stato': '-', 'Litri': 0},
+        {'Marca': 'IT009', 'Nome': 'Piccola', 'Sesso': 'Femmina', 'Categoria': 'Vitello', 'Stato': 'Svezzamento', 'Litri': 0}
     ])
 
 if 'vendite_log' not in st.session_state:
     st.session_state.vendite_log = pd.DataFrame(columns=['Orario', 'Prodotto', 'Importo'])
-
 if 'cassa_totale' not in st.session_state: st.session_state.cassa_totale = 0.0
 
-# --- 4. MENU LATERALE ---
+# --- 4. MENU ---
 with st.sidebar:
     st.markdown("<h2 style='text-align: center;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
-    sel = option_menu(None, ["Dashboard", "Stalla Dettagliata", "Cassa & Vendite", "JD-Link"], 
-        icons=['speedometer2', 'cow', 'cart4', 'truck'], 
+    sel = option_menu(None, ["Dashboard", "Registro Stalla", "Cassa & Vendite", "JD-Link"], 
+        icons=['speedometer2', 'clipboard2-pulse', 'cart4', 'truck'], 
         menu_icon="cast", default_index=0,
         styles={
             "container": {"background-color": "transparent"},
@@ -62,69 +61,43 @@ with st.sidebar:
 
 if sel == "Dashboard":
     st.title("📊 Centro di Controllo Aziendale")
-    
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.markdown(f"<div class='main-card'><span class='stat-label'>🥛 Latte Totale</span><span class='stat-val'>{st.session_state.stalla_db['Litri'].sum()} L</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='main-card'><span class='stat-label'>🥛 Latte Oggi</span><span class='stat-val'>{st.session_state.stalla_db['Litri'].sum()} L</span></div>", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"<div class='main-card'><span class='stat-label'>🐄 Capi in Stalla</span><span class='stat-val'>{len(st.session_state.stalla_db)}</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='main-card'><span class='stat-label'>🐄 Capi Totali</span><span class='stat-val'>{len(st.session_state.stalla_db)}</span></div>", unsafe_allow_html=True)
     with c3:
         st.markdown(f"<div class='main-card'><span class='stat-label'>💰 Incasso Giorno</span><span class='stat-val'>{st.session_state.cassa_totale:.2f} €</span></div>", unsafe_allow_html=True)
 
-    st.write("### 📈 Andamento Produzione")
+    st.write("### 📈 Produzione Settimanale")
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'], y=[1100, 1250, 1220, 1300, 1280, 1350, 1400],
                     mode='lines+markers', line=dict(color='#2E7D32', width=4), fill='tozeroy', fillcolor='rgba(46, 125, 50, 0.1)'))
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(fig, use_container_width=True)
 
-elif sel == "Stalla Dettagliata":
-    st.title("🐄 Registro Avanzato Stalla")
+elif sel == "Registro Stalla":
+    st.title("🐄 Registro Anagrafico Mandria")
     
-    t1, t2 = st.tabs(["📋 Lista Mandria", "➕ Registra Nuovo Capo"])
+    t1, t2 = st.tabs(["📋 Lista Animali", "➕ Inserisci Nuovo Capo"])
     
     with t1:
         st.markdown("<div class='main-card'>", unsafe_allow_html=True)
+        # Mostriamo la tabella con tutti i dettagli tecnici
         st.dataframe(st.session_state.stalla_db, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
     with t2:
-        with st.form("nuova_vacca"):
+        with st.form("nuovo_animale"):
+            st.write("#### Dati Identificativi")
             col1, col2 = st.columns(2)
-            id_v = col1.text_input("Marca Auricolare")
-            nome_v = col2.text_input("Nome Vacca")
-            stato_v = col1.selectbox("Stato", ["Lattazione", "Asciutta", "Rimonta", "Infermeria"])
-            salute_v = col2.selectbox("Salute", ["Ottima", "Monitoraggio", "Trattamento"])
-            litri_v = st.number_input("Litri/Giorno", 0)
-            if st.form_submit_button("REGISTRA IN STALLA"):
-                nuova = {'ID': id_v, 'Nome': nome_v, 'Stato': stato_v, 'Salute': salute_v, 'Mungitura': 'Da fare', 'Litri': litri_v}
-                st.session_state.stalla_db = pd.concat([st.session_state.stalla_db, pd.DataFrame([nuova])], ignore_index=True)
-                st.rerun()
-
-elif sel == "Cassa & Vendite":
-    st.title("🛒 Gestione Cassa")
-    
-    col_a, col_b = st.columns([1, 1.5])
-    
-    with col_a:
-        st.markdown("<div class='main-card'>", unsafe_allow_html=True)
-        st.write("#### Nuova Vendita")
-        prod = st.selectbox("Prodotto", ["Latte Crudo", "Caciocavallo", "Ricotta", "Formaggio Stagionato"])
-        prezzo = st.number_input("Importo (€)", min_value=0.0, step=0.50)
-        if st.button("REGISTRA VENDITA"):
-            st.session_state.cassa_totale += prezzo
-            ora = datetime.now().strftime("%H:%M")
-            nuova_v = {'Orario': ora, 'Prodotto': prod, 'Importo': prezzo}
-            st.session_state.vendite_log = pd.concat([st.session_state.vendite_log, pd.DataFrame([nuova_v])], ignore_index=True)
-            st.success("Vendita salvata!")
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-    with col_b:
-        st.markdown("<div class='main-card'>", unsafe_allow_html=True)
-        st.write("#### Storico Operazioni Odierne")
-        st.table(st.session_state.vendite_log)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-elif sel == "JD-Link":
-    st.title("🚜 Telemetria John Deere")
-    st.info("Piattaforma pronta per la connessione. Domani inseriremo i dati API.")
+            ma = col1.text_input("Marca Auricolare (Es. IT...)")
+            no = col2.text_input("Nome Animale")
+            
+            st.write("#### Caratteristiche")
+            c3, c4, c5 = st.columns(3)
+            sex = c3.selectbox("Sesso", ["Femmina", "Maschio"])
+            cat = c4.selectbox("Categoria", ["Vacca", "Vitello", "Manza", "Torello", "Bue"])
+            sta = c5.selectbox("Stato Fisiologico", ["Lattazione", "Asciutta", "Svezzamento", "Ingrasso", "Infermeria"])
+            
+            li = st.number_
