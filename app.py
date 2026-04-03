@@ -4,63 +4,105 @@ import plotly.express as px
 from streamlit_option_menu import option_menu
 from datetime import datetime
 
-# 1. CONFIGURAZIONE
-st.set_page_config(page_title="Torretta Pro v21", layout="wide", page_icon="🐄")
+# --- CONFIGURAZIONE E STILE ---
+st.set_page_config(page_title="Torretta Management PRO", layout="wide", page_icon="🐄")
 
-# 2. DATABASE PERSISTENTE (Stalla e Produzione)
-if 'stalla_db' not in st.session_state:
-    st.session_state.stalla_db = pd.DataFrame([
-        {'ID': 'IT0192', 'Nome': 'Bella', 'Razza': 'Frisona', 'Stato': 'In Lattazione', 'Ultima Mungitura': '06:00'},
-        {'ID': 'IT0195', 'Nome': 'Stella', 'Razza': 'Bruna', 'Stato': 'Asciutta', 'Ultima Mungitura': '-'}
-    ])
-
-if 'latte_oggi' not in st.session_state: st.session_state.latte_oggi = 1240.0
-if 'cassa_oggi' not in st.session_state: st.session_state.cassa_oggi = 0.0
-
-# 3. STILE CSS (Il look professionale che volevi)
 st.markdown("""
 <style>
-    .stApp { background: #f8f9fa; }
+    .stApp { background-color: #f4f7f6; }
     [data-testid="stSidebar"] { background-color: #1b3d2f !important; }
-    .main-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 5px solid #2E7D32; }
-    .stat-val { font-size: 35px; font-weight: bold; color: #2E7D32; }
-    .stButton>button { border-radius: 12px; height: 3em; font-weight: bold; transition: 0.3s; }
-    .stButton>button:hover { background-color: #1b3d2f; color: white; border: 2px solid #2E7D32; }
+    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-top: 5px solid #2E7D32; }
+    .stat-title { color: #666; font-size: 14px; text-transform: uppercase; font-weight: bold; }
+    .stat-value { color: #2E7D32; font-size: 30px; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-# 4. MENU
+# --- DATABASE INTERNO ---
+if 'stalla_db' not in st.session_state:
+    st.session_state.stalla_db = pd.DataFrame([
+        {'Marca Auricolare': 'IT0192', 'Nome': 'Bella', 'Razza': 'Frisona', 'Stato': 'Lattazione', 'Litri/Giorno': 32.5},
+        {'Marca Auricolare': 'IT0195', 'Nome': 'Stella', 'Razza': 'Bruna', 'Stato': 'Asciutta', 'Litri/Giorno': 0.0}
+    ])
+
+if 'cassa' not in st.session_state: st.session_state.cassa = 0.0
+
+# --- MENU ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2396/2396069.png", width=80)
-    st.markdown("<h2 style='color:white;'>TORRETTA ELITE</h2>", unsafe_allow_html=True)
-    scelta = option_menu(None, ["Dashboard", "Stalla", "Cassa", "JD-Link"], 
-        icons=['speedometer2', 'cow', 'cart4', 'broadcast-pin'], 
+    st.markdown("<h2 style='color:white; text-align:center;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
+    selected = option_menu(None, ["Dashboard", "Registro Stalla", "Cassa Vendite", "JD-Link"], 
+        icons=['speedometer2', 'clipboard-data', 'cart-check', 'truck'], 
         menu_icon="cast", default_index=0,
         styles={"nav-link": {"color": "white"}, "nav-link-selected": {"background-color": "#2E7D32"}})
 
 # --- LOGICA PAGINE ---
 
-if scelta == "Dashboard":
-    st.title("📊 Centro di Comando Aziendale")
+if selected == "Dashboard":
+    st.title("📊 Riepilogo Aziendale")
     
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown(f"<div class='main-card'>🥛 LATTE TOTALE<br><span class='stat-val'>{st.session_state.latte_oggi} L</span></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown(f"<div class='main-card'>🐄 CAPI IN STALLA<br><span class='stat-val'>{len(st.session_state.stalla_db)}</span></div>", unsafe_allow_html=True)
-    with c3:
-        st.markdown(f"<div class='main-card'>💰 INCASSO<br><span class='stat-val'>{st.session_state.cassa_oggi} €</span></div>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f"<div class='card'><div class='stat-title'>Produzione Latte</div><div class='stat-value'>{st.session_state.stalla_db['Litri/Giorno'].sum()} L</div></div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"<div class='card'><div class='stat-title'>Capi Totali</div><div class='stat-value'>{len(st.session_state.stalla_db)}</div></div>", unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"<div class='card'><div class='stat-title'>Incasso Lordo</div><div class='stat-value'>{st.session_state.cassa:.2f} €</div></div>", unsafe_allow_html=True)
 
-    st.write("### 📈 Produzione Ultimi 7 Giorni")
-    df_graf = pd.DataFrame({'G': ['L','M','M','G','V','S','D'], 'L': [1150, 1200, 1240, 1190, 1210, 1260, 1300]})
-    fig = px.bar(df_graf, x='G', y='L', color='L', color_continuous_scale='Greens', labels={'L':'Litri', 'G':'Giorno'})
+    st.write("---")
+    st.subheader("📈 Andamento Latte")
+    # Grafico dettagliato
+    df_chart = pd.DataFrame({'Giorno': ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'], 'Produzione': [1180, 1220, 1240, 1210, 1250, 1310, 1290]})
+    fig = px.area(df_chart, x='Giorno', y='Produzione', line_shape='spline', color_discrete_sequence=['#2E7D32'])
     st.plotly_chart(fig, use_container_width=True)
 
-elif scelta == "Stalla":
-    st.title("🐄 Registro Anagrafico Stalla")
+elif selected == "Registro Stalla":
+    st.title("🐄 Gestione Mandria")
     
-    tab1, tab2 = st.tabs(["📋 Elenco Capi", "➕ Aggiungi Capo"])
+    tab1, tab2, tab3 = st.tabs(["📋 Elenco Capi", "➕ Nuovo Ingresso", "🩺 Salute/Produzione"])
     
     with tab1:
-        st.markdown("<div class='main-card'>", unsafe_allow_html=True)
-        st.dataframe(st.session_state.stalla_db, use_container_width
+        st.write("### Anagrafica Attuale")
+        st.dataframe(st.session_state.stalla_db, use_container_width=True)
+        
+    with tab2:
+        st.write("### Registra Nuova Vacca")
+        with st.form("form_stalla"):
+            c1, c2 = st.columns(2)
+            marca = c1.text_input("Marca Auricolare (Es. IT...)")
+            nome = c2.text_input("Nome Capo")
+            razza = c1.selectbox("Razza", ["Frisona", "Bruna", "Pezzata Rossa", "Jersey"])
+            stato = c2.selectbox("Stato", ["Lattazione", "Asciutta", "Rimonta", "Infermeria"])
+            litri = st.number_input("Litri medi al giorno", min_value=0.0)
+            
+            if st.form_submit_button("Aggiungi in Stalla"):
+                nuova_v = {'Marca Auricolare': marca, 'Nome': nome, 'Razza': razza, 'Stato': stato, 'Litri/Giorno': litri}
+                st.session_state.stalla_db = pd.concat([st.session_state.stalla_db, pd.DataFrame([nuova_v])], ignore_index=True)
+                st.success(f"{nome} registrata correttamente!")
+                st.rerun()
+
+    with tab3:
+        st.info("Qui aggiungeremo i grafici sulla salute e i giorni medi di lattazione.")
+
+elif selected == "Cassa Vendite":
+    st.title("🛒 Punto Vendita")
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        st.write("### Nuova Vendita")
+        prod = st.selectbox("Seleziona Prodotto", ["Latte Crudo", "Caciocavallo", "Ricotta", "Primo Sale"])
+        prezzo = st.number_input("Importo (€)", min_value=0.0)
+        if st.button("Registra Incasso"):
+            st.session_state.cassa += prezzo
+            st.toast("Incasso salvato!")
+            st.balloons()
+    with c2:
+        st.write("### Totale oggi")
+        st.markdown(f"<div style='font-size:50px; color:#2E7D32; font-weight:bold;'>{st.session_state.cassa:.2f} €</div>", unsafe_allow_html=True)
+
+elif selected == "JD-Link":
+    st.title("🚜 Telemetria Macchine")
+    st.warning("Pronto per il collegamento con l'account di papà.")
+    st.markdown("""
+        <div style='background:white; padding:20px; border-radius:10px; border:1px solid #eee;'>
+            <h4>📡 Status API: In attesa</h4>
+            <p>Appena avremo il <b>Client ID</b> e il <b>Secret</b>, qui vedremo la mappa dei terreni e lo stato dei trattori.</p>
+        </div>
+    """, unsafe_allow_html=True)
