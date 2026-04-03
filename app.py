@@ -1,108 +1,162 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 from streamlit_option_menu import option_menu
 from datetime import datetime
 
-# --- CONFIGURAZIONE E STILE ---
-st.set_page_config(page_title="Torretta Management PRO", layout="wide", page_icon="🐄")
+# --- CONFIGURAZIONE E STILE AVANZATO ---
+st.set_page_config(page_title="Torretta Command Center", layout="wide", page_icon="🌿")
 
+# CSS PERSONALIZZATO PER UN LOOK MOZZAFIATO
 st.markdown("""
 <style>
-    .stApp { background-color: #f4f7f6; }
-    [data-testid="stSidebar"] { background-color: #1b3d2f !important; }
-    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border-top: 5px solid #2E7D32; }
-    .stat-title { color: #666; font-size: 14px; text-transform: uppercase; font-weight: bold; }
-    .stat-value { color: #2E7D32; font-size: 30px; font-weight: bold; }
+    /* Sfondo sfumato */
+    .stApp {
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        color: #ffffff;
+    }
+    
+    /* Sidebar stile moderno */
+    [data-testid="stSidebar"] {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Card Effetto Vetro */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        margin-bottom: 20px;
+    }
+    
+    .stat-value {
+        font-size: 40px;
+        font-weight: 800;
+        background: -webkit-linear-gradient(#00c853, #b2ff59);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* Bottoni Premium */
+    .stButton>button {
+        width: 100%;
+        border-radius: 12px;
+        background: linear-gradient(45deg, #2E7D32, #43a047);
+        color: white;
+        border: none;
+        padding: 15px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 5px 15px rgba(46, 125, 50, 0.4);
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- DATABASE INTERNO ---
-if 'stalla_db' not in st.session_state:
-    st.session_state.stalla_db = pd.DataFrame([
-        {'Marca Auricolare': 'IT0192', 'Nome': 'Bella', 'Razza': 'Frisona', 'Stato': 'Lattazione', 'Litri/Giorno': 32.5},
-        {'Marca Auricolare': 'IT0195', 'Nome': 'Stella', 'Razza': 'Bruna', 'Stato': 'Asciutta', 'Litri/Giorno': 0.0}
+# --- INIZIALIZZAZIONE DATI ---
+if 'db_stalla' not in st.session_state:
+    st.session_state.db_stalla = pd.DataFrame([
+        {'ID': 'IT001', 'Nome': 'Regina', 'Stato': 'Lattazione', 'Salute': 'Ottima', 'Litri': 35},
+        {'ID': 'IT002', 'Nome': 'Mora', 'Stato': 'Asciutta', 'Salute': 'Monitoraggio', 'Litri': 0}
     ])
+if 'cassa_totale' not in st.session_state: st.session_state.cassa_totale = 0.0
 
-if 'cassa' not in st.session_state: st.session_state.cassa = 0.0
-
-# --- MENU ---
+# --- NAVIGAZIONE ---
 with st.sidebar:
-    st.markdown("<h2 style='color:white; text-align:center;'>🛡️ TORRETTA PRO</h2>", unsafe_allow_html=True)
-    selected = option_menu(None, ["Dashboard", "Registro Stalla", "Cassa Vendite", "JD-Link"], 
-        icons=['speedometer2', 'clipboard-data', 'cart-check', 'truck'], 
+    st.markdown("<h1 style='text-align: center; color: #00c853;'>TORRETTA PRO</h1>", unsafe_allow_html=True)
+    menu = option_menu(None, ["Dashboard", "Gestione Stalla", "Cassa Smart", "JD-Link"], 
+        icons=['cpu', 'activity', 'wallet2', 'truck'], 
         menu_icon="cast", default_index=0,
-        styles={"nav-link": {"color": "white"}, "nav-link-selected": {"background-color": "#2E7D32"}})
+        styles={
+            "container": {"background-color": "transparent"},
+            "nav-link": {"color": "white", "font-size": "16px"},
+            "nav-link-selected": {"background-color": "#2E7D32"}
+        })
 
-# --- LOGICA PAGINE ---
-
-if selected == "Dashboard":
-    st.title("📊 Riepilogo Aziendale")
+# --- PAGINA: DASHBOARD ---
+if menu == "Dashboard":
+    st.markdown("<h2 style='color: white;'>🚀 Command Center Aziendale</h2>", unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown(f"<div class='card'><div class='stat-title'>Produzione Latte</div><div class='stat-value'>{st.session_state.stalla_db['Litri/Giorno'].sum()} L</div></div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown(f"<div class='card'><div class='stat-title'>Capi Totali</div><div class='stat-value'>{len(st.session_state.stalla_db)}</div></div>", unsafe_allow_html=True)
-    with col3:
-        st.markdown(f"<div class='card'><div class='stat-title'>Incasso Lordo</div><div class='stat-value'>{st.session_state.cassa:.2f} €</div></div>", unsafe_allow_html=True)
-
-    st.write("---")
-    st.subheader("📈 Andamento Latte")
-    # Grafico dettagliato
-    df_chart = pd.DataFrame({'Giorno': ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'], 'Produzione': [1180, 1220, 1240, 1210, 1250, 1310, 1290]})
-    fig = px.area(df_chart, x='Giorno', y='Produzione', line_shape='spline', color_discrete_sequence=['#2E7D32'])
-    st.plotly_chart(fig, use_container_width=True)
-
-elif selected == "Registro Stalla":
-    st.title("🐄 Gestione Mandria")
-    
-    tab1, tab2, tab3 = st.tabs(["📋 Elenco Capi", "➕ Nuovo Ingresso", "🩺 Salute/Produzione"])
-    
-    with tab1:
-        st.write("### Anagrafica Attuale")
-        st.dataframe(st.session_state.stalla_db, use_container_width=True)
-        
-    with tab2:
-        st.write("### Registra Nuova Vacca")
-        with st.form("form_stalla"):
-            c1, c2 = st.columns(2)
-            marca = c1.text_input("Marca Auricolare (Es. IT...)")
-            nome = c2.text_input("Nome Capo")
-            razza = c1.selectbox("Razza", ["Frisona", "Bruna", "Pezzata Rossa", "Jersey"])
-            stato = c2.selectbox("Stato", ["Lattazione", "Asciutta", "Rimonta", "Infermeria"])
-            litri = st.number_input("Litri medi al giorno", min_value=0.0)
-            
-            if st.form_submit_button("Aggiungi in Stalla"):
-                nuova_v = {'Marca Auricolare': marca, 'Nome': nome, 'Razza': razza, 'Stato': stato, 'Litri/Giorno': litri}
-                st.session_state.stalla_db = pd.concat([st.session_state.stalla_db, pd.DataFrame([nuova_v])], ignore_index=True)
-                st.success(f"{nome} registrata correttamente!")
-                st.rerun()
-
-    with tab3:
-        st.info("Qui aggiungeremo i grafici sulla salute e i giorni medi di lattazione.")
-
-elif selected == "Cassa Vendite":
-    st.title("🛒 Punto Vendita")
-    c1, c2 = st.columns([1, 1])
+    c1, c2, c3 = st.columns(3)
     with c1:
-        st.write("### Nuova Vendita")
-        prod = st.selectbox("Seleziona Prodotto", ["Latte Crudo", "Caciocavallo", "Ricotta", "Primo Sale"])
-        prezzo = st.number_input("Importo (€)", min_value=0.0)
-        if st.button("Registra Incasso"):
-            st.session_state.cassa += prezzo
-            st.toast("Incasso salvato!")
-            st.balloons()
+        st.markdown(f"<div class='glass-card'><small>LATTE PRODOTTO</small><br><span class='stat-value'>{st.session_state.db_stalla['Litri'].sum()} L</span></div>", unsafe_allow_html=True)
     with c2:
-        st.write("### Totale oggi")
-        st.markdown(f"<div style='font-size:50px; color:#2E7D32; font-weight:bold;'>{st.session_state.cassa:.2f} €</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='glass-card'><small>CAPI ATTIVI</small><br><span class='stat-value'>{len(st.session_state.db_stalla)}</span></div>", unsafe_allow_html=True)
+    with c3:
+        st.markdown(f"<div class='glass-card'><small>INCASSO GIORNALIERO</small><br><span class='stat-value'>{st.session_state.cassa_totale:.2f} €</span></div>", unsafe_allow_html=True)
 
-elif selected == "JD-Link":
-    st.title("🚜 Telemetria Macchine")
-    st.warning("Pronto per il collegamento con l'account di papà.")
+    # Grafico High-Tech
+    st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+    st.subheader("📊 Flusso di Produzione")
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'], y=[1100, 1250, 1220, 1300, 1280, 1350, 1400],
+                    mode='lines+markers', name='Litri',
+                    line=dict(color='#00c853', width=4),
+                    fill='tozeroy', fillcolor='rgba(0, 200, 83, 0.1)'))
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"), margin=dict(l=0,r=0,t=20,b=0))
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# --- PAGINA: STALLA ---
+elif menu == "Gestione Stalla":
+    st.markdown("<h2 style='color: white;'>🐄 Registro Digitale Mandria</h2>", unsafe_allow_html=True)
+    
+    t1, t2 = st.tabs(["📋 Monitoraggio Capi", "➕ Nuovo Inserimento"])
+    
+    with t1:
+        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+        # Tabella stilizzata
+        st.dataframe(st.session_state.db_stalla, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    with t2:
+        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+        with st.form("add_cow"):
+            col1, col2 = st.columns(2)
+            id_c = col1.text_input("Codice Marca Auricolare")
+            nome_c = col2.text_input("Nome Capo")
+            stato_c = col1.selectbox("Stato Fisiologico", ["Lattazione", "Asciutta", "Rimonta"])
+            salute_c = col2.selectbox("Stato Salute", ["Ottima", "Monitoraggio", "Trattamento"])
+            litri_c = st.slider("Litri Giornalieri Stimati", 0, 50, 25)
+            if st.form_submit_button("REGISTRA NEL SISTEMA"):
+                new_row = {'ID': id_c, 'Nome': nome_c, 'Stato': stato_c, 'Salute': salute_c, 'Litri': litri_c}
+                st.session_state.db_stalla = pd.concat([st.session_state.db_stalla, pd.DataFrame([new_row])], ignore_index=True)
+                st.success("✅ Capo inserito con successo!")
+                st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# --- PAGINA: CASSA ---
+elif menu == "Cassa Smart":
+    st.markdown("<h2 style='color: white;'>🛒 Terminale Punto Vendita</h2>", unsafe_allow_html=True)
+    col_a, col_b = st.columns([1, 1])
+    
+    with col_a:
+        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+        prodotto = st.selectbox("Prodotto", ["Latte Crudo", "Caciocavallo", "Ricotta Fresca", "Primo Sale"])
+        importo = st.number_input("Prezzo di Vendita (€)", min_value=0.0, step=0.5)
+        if st.button("REGISTRA VENDITA"):
+            st.session_state.cassa_totale += importo
+            st.balloons()
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    with col_b:
+        st.markdown(f"<div class='glass-card' style='text-align: center;'><small>TOTALE CASSA OGGI</small><br><span style='font-size: 60px; font-weight: bold; color: #00c853;'>{st.session_state.cassa_totale:.2f} €</span></div>", unsafe_allow_html=True)
+
+# --- PAGINA: JD-LINK ---
+elif menu == "JD-Link":
+    st.markdown("<h2 style='color: white;'>🚜 Integrazione JD-Link</h2>", unsafe_allow_html=True)
     st.markdown("""
-        <div style='background:white; padding:20px; border-radius:10px; border:1px solid #eee;'>
-            <h4>📡 Status API: In attesa</h4>
-            <p>Appena avremo il <b>Client ID</b> e il <b>Secret</b>, qui vedremo la mappa dei terreni e lo stato dei trattori.</p>
-        </div>
+    <div class='glass-card' style='border-left: 5px solid #FFD700;'>
+        <h3>📡 Collegamento Satellitare Pronto</h3>
+        <p>In attesa della chiave API di John Deere per sincronizzare i mezzi.</p>
+        <p style='color: #FFD700;'><i>Configurazione prevista: Domani mattina</i></p>
+    </div>
     """, unsafe_allow_html=True)
